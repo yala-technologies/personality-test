@@ -3,14 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { candidateGet, candidateSave } from '../lib/api';
 import { QUESTIONS, LIKERT_SCALE } from '../lib/questions';
-import type { Candidate } from '../lib/types';
+import type { CandidateAssessment } from '../lib/types';
 
 const QUESTIONS_PER_PAGE = 4;
 
 export function Assessment() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [candidate, setCandidate] = useState<CandidateAssessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [responses, setResponses] = useState<Record<number, number>>({});

@@ -1,33 +1,42 @@
-import type { Candidate } from './types';
+import type { AdminCandidate, CandidateAssessment, AdminSession } from './types';
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/personality-api`;
 
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-export async function adminLogin(password: string): Promise<{ token: string; expires_at: number }> {
+/**
+ * Admin login
+ * Backend expects: { action: 'admin.login', password: string }
+ * Backend returns: { session: string, expiresAt: string }
+ */
+export async function adminLogin(password: string): Promise<AdminSession> {
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      operation: 'admin.login',
+      action: 'admin.login',
       password,
     }),
   });
 
-  const result: ApiResponse<{ token: string; expires_at: number }> = await response.json();
-  
-  if (!result.success || !result.data) {
-    throw new Error(result.error || 'Login failed');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Login failed' }));
+    throw new Error(error.error || 'Login failed');
   }
 
-  return result.data;
+  const result = await response.json();
+  
+  // Translate backend response to frontend session format
+  return {
+    token: result.session,
+    expires_at: new Date(result.expiresAt).getTime(),
+  };
 }
 
-export async function adminListCandidates(sessionToken: string): Promise<Candidate[]> {
+/**
+ * Admin list candidates
+ * Backend expects: { action: 'admin.list' }
+ * Backend returns: { candidates: AdminCandidate[] }
+ */
+export async function adminListCandidates(sessionToken: string): Promise<AdminCandidate[]> {
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
     headers: { 
@@ -35,24 +44,29 @@ export async function adminListCandidates(sessionToken: string): Promise<Candida
       'Authorization': `Bearer ${sessionToken}`,
     },
     body: JSON.stringify({
-      operation: 'admin.list',
+      action: 'admin.list',
     }),
   });
 
-  const result: ApiResponse<Candidate[]> = await response.json();
-  
-  if (!result.success || !result.data) {
-    throw new Error(result.error || 'Failed to fetch candidates');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch candidates' }));
+    throw new Error(error.error || 'Failed to fetch candidates');
   }
 
-  return result.data;
+  const result = await response.json();
+  return result.candidates;
 }
 
+/**
+ * Admin create candidate
+ * Backend expects: { action: 'admin.create', name: string, email?: string }
+ * Backend returns: { candidate: AdminCandidate }
+ */
 export async function adminCreateCandidate(
   sessionToken: string,
   name: string,
   email?: string
-): Promise<Candidate> {
+): Promise<AdminCandidate> {
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
     headers: { 
@@ -60,21 +74,26 @@ export async function adminCreateCandidate(
       'Authorization': `Bearer ${sessionToken}`,
     },
     body: JSON.stringify({
-      operation: 'admin.create',
+      action: 'admin.create',
       name,
       email,
     }),
   });
 
-  const result: ApiResponse<Candidate> = await response.json();
-  
-  if (!result.success || !result.data) {
-    throw new Error(result.error || 'Failed to create candidate');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to create candidate' }));
+    throw new Error(error.error || 'Failed to create candidate');
   }
 
-  return result.data;
+  const result = await response.json();
+  return result.candidate;
 }
 
+/**
+ * Admin set benchmark
+ * Backend expects: { action: 'admin.benchmark', id: string }
+ * Backend returns: { ok: true }
+ */
 export async function adminSetBenchmark(
   sessionToken: string,
   candidateId: string
@@ -86,62 +105,71 @@ export async function adminSetBenchmark(
       'Authorization': `Bearer ${sessionToken}`,
     },
     body: JSON.stringify({
-      operation: 'admin.benchmark',
-      candidate_id: candidateId,
+      action: 'admin.benchmark',
+      id: candidateId,
     }),
   });
 
-  const result: ApiResponse = await response.json();
-  
-  if (!result.success) {
-    throw new Error(result.error || 'Failed to set benchmark');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to set benchmark' }));
+    throw new Error(error.error || 'Failed to set benchmark');
   }
 }
 
-export async function candidateGet(accessToken: string): Promise<Candidate> {
+/**
+ * Candidate get assessment
+ * Backend expects: { action: 'candidate.get', token: string }
+ * Backend returns: { candidate: CandidateAssessment }
+ */
+export async function candidateGet(accessToken: string): Promise<CandidateAssessment> {
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      operation: 'candidate.get',
-      access_token: accessToken,
+      action: 'candidate.get',
+      token: accessToken,
     }),
   });
 
-  const result: ApiResponse<Candidate> = await response.json();
-  
-  if (!result.success || !result.data) {
-    throw new Error(result.error || 'Failed to fetch candidate');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch assessment' }));
+    throw new Error(error.error || 'Failed to fetch assessment');
   }
 
-  return result.data;
+  const result = await response.json();
+  return result.candidate;
 }
 
+/**
+ * Candidate save responses
+ * Backend expects: { action: 'candidate.save', token: string, responses: {}, completed: boolean }
+ * Backend returns: { candidate: CandidateAssessment }
+ */
 export async function candidateSave(
   accessToken: string,
   responses: Record<number, number>,
   isComplete: boolean
-): Promise<Candidate> {
+): Promise<CandidateAssessment> {
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      operation: 'candidate.save',
-      access_token: accessToken,
+      action: 'candidate.save',
+      token: accessToken,
       responses,
-      is_complete: isComplete,
+      completed: isComplete,
     }),
   });
 
-  const result: ApiResponse<Candidate> = await response.json();
-  
-  if (!result.success || !result.data) {
-    throw new Error(result.error || 'Failed to save responses');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to save responses' }));
+    throw new Error(error.error || 'Failed to save responses');
   }
 
-  return result.data;
+  const result = await response.json();
+  return result.candidate;
 }

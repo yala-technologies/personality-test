@@ -1,14 +1,61 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Check } from 'lucide-react';
 import { candidateGet, candidateSave } from '../lib/api';
 import { QUESTIONS } from '../lib/questions';
-import type { Candidate } from '../lib/types';
+import type { CandidateAssessment } from '../lib/types';
+
+/**
+ * Queue-based autosave to prevent race conditions
+ * Ensures latest state is always saved and saves never finish out of order
+ */
+class SaveQueue {
+  private queue: Array<() => Promise<void>> = [];
+  private isProcessing = false;
+
+  enqueue(_responses: Record<number, number>, _isComplete: boolean, saveFn: () => Promise<void>) {
+    this.queue.push(saveFn);
+    this.process();
+  }
+
+  private async process() {
+    if (this.isProcessing || this.queue.length === 0) return;
+
+    this.isProcessing = true;
+
+    while (this.queue.length > 0) {
+      // Only execute the latest save
+      const saveFn = this.queue[this.queue.length - 1];
+      this.queue = [];
+
+      try {
+        await saveFn();
+      } catch (err) {
+        console.error('Save failed:', err);
+      }
+
+      // If new responses were enqueued while saving, continue
+      if (this.queue.length === 0) break;
+    }
+
+    this.isProcessing = false;
+  }
+
+  async flush() {
+    while (this.isProcessing || this.queue.length > 0) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  }
+
+  isActive() {
+    return this.isProcessing || this.queue.length > 0;
+  }
+}
 
 export function InteractiveAssessment() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [candidate, setCandidate] = useState<CandidateAssessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [responses, setResponses] = useState<Record<number, number>>({});
@@ -16,6 +63,7 @@ export function InteractiveAssessment() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
+  const saveQueueRef = useRef(new SaveQueue());
 
   useEffect(() => {
     if (!token) {
@@ -61,23 +109,21 @@ export function InteractiveAssessment() {
   }
 
   const autosave = useCallback(
-    async (currentResponses: Record<number, number>, isComplete: boolean) => {
-      if (!token || saving) return;
+    (currentResponses: Record<number, number>, isComplete: boolean) => {
+      if (!token) return;
 
-      try {
-        setSaving(true);
+      setSaving(true);
+      
+      saveQueueRef.current.enqueue(currentResponses, isComplete, async () => {
         await candidateSave(token, currentResponses, isComplete);
-      } catch (err) {
-        console.error('Autosave failed:', err);
-      } finally {
         setSaving(false);
-      }
+      });
     },
-    [token, saving]
+    [token]
   );
 
   async function handleAnswer(value: number) {
-    if (!candidate) return;
+    if (!candidate || submitting) return;
 
     const orderedQuestions = candidate.question_order || Array.from({ length: 72 }, (_, i) => i + 1);
     const currentQuestionId = orderedQuestions[currentQuestionIndex];
@@ -87,11 +133,14 @@ export function InteractiveAssessment() {
       [currentQuestionId]: value,
     };
 
+    // Update local state immediately
     setResponses(newResponses);
     setShowTransition(true);
 
-    await autosave(newResponses, false);
+    // Enqueue save (non-blocking)
+    autosave(newResponses, false);
 
+    // Progress UI after brief transition
     setTimeout(() => {
       if (currentQuestionIndex < orderedQuestions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -103,7 +152,7 @@ export function InteractiveAssessment() {
   }
 
   async function handleSubmit(finalResponses?: Record<number, number>) {
-    if (!token || !candidate) return;
+    if (!token || !candidate || submitting) return;
 
     const responsesToSubmit = finalResponses || responses;
     const totalAnswered = Object.keys(responsesToSubmit).length;
@@ -112,11 +161,16 @@ export function InteractiveAssessment() {
 
     try {
       setSubmitting(true);
+      
+      // Flush any pending autosaves before final submission
+      await saveQueueRef.current.flush();
+      
+      // Submit with completed flag
       await candidateSave(token, responsesToSubmit, true);
+      
       navigate(`/assessment/${token}/complete`, { replace: true });
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to submit assessment');
-    } finally {
       setSubmitting(false);
     }
   }

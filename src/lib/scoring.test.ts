@@ -166,7 +166,7 @@ describe('Scoring', () => {
       // High straight-line can also cause low consistency, so status could be either
       expect(['Review', 'Low consistency']).toContain(quality.status);
       expect(quality.flags.length).toBeGreaterThan(0);
-      expect(quality.straight_line_rate).toBeGreaterThan(70);
+      expect(quality.straightLineRate).toBeGreaterThan(70);
     });
 
     it('should flag very fast completion', () => {
@@ -190,7 +190,7 @@ describe('Scoring', () => {
       const quality = calculateQuality(responses, 600);
 
       expect(quality.status).toBe('Good');
-      expect(quality.consistency_score).toBeGreaterThan(0);
+      expect(quality.consistencyScore).toBeGreaterThan(0);
     });
   });
 

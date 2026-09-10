@@ -1,4 +1,4 @@
-import type { TraitScores, QualitySignals, QualityStatus } from './types';
+import type { TraitScores, QualitySignals } from './types';
 
 /**
  * Trait mapping: question IDs and whether they are reverse-scored
@@ -255,7 +255,7 @@ export function calculateQuality(
   }
   
   // Determine overall status
-  let status: QualityStatus = 'Good';
+  let status = 'Good';
   if (consistencyScore < 50) {
     status = 'Low consistency';
   } else if (flags.length > 0) {
@@ -265,8 +265,9 @@ export function calculateQuality(
   return {
     status,
     flags,
-    straight_line_rate: Math.round(straightLineRate * 10) / 10,
-    consistency_score: consistencyScore,
+    straightLineRate: Math.round(straightLineRate * 10) / 10,
+    consistencyScore,
+    durationSeconds,
   };
 }
 

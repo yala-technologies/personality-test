@@ -1,11 +1,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
-// Password hash for "Yala123" (SHA-256)
-const ADMIN_PASSWORD_HASH = 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3';
+// Assessment version constant
+export const ASSESSMENT_VERSION = 'YALA_BDR_PERSONALITY_V1';
 
-// Simple JWT signing (for demo purposes - consider using a library in production)
-const ADMIN_SECRET = Deno.env.get('ADMIN_SECRET') || 'change-me-in-production';
+// Password hash for "Yala123" (SHA-256) - CORRECT HASH
+const ADMIN_PASSWORD_HASH = '11d16afc298bebd8153b31234beda426bca99b74a759978979b7193c0f56bf19';
+
+// HMAC secret for signing admin sessions
+const ADMIN_SECRET = Deno.env.get('ADMIN_SECRET') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 interface TraitScores {
   industriousness: number;
@@ -22,11 +25,12 @@ interface TraitScores {
 interface QualitySignals {
   status: string;
   flags: string[];
-  straight_line_rate: number;
-  consistency_score: number;
+  straightLineRate: number;
+  consistencyScore: number;
+  durationSeconds: number | null;
 }
 
-// Trait mapping
+// Trait mapping (preserve existing scoring model exactly)
 const TRAIT_QUESTIONS: Record<keyof TraitScores, Array<{ id: number; reverse: boolean }>> = {
   industriousness: [
     { id: 1, reverse: false },
@@ -45,7 +49,7 @@ const TRAIT_QUESTIONS: Record<keyof TraitScores, Array<{ id: number; reverse: bo
     { id: 26, reverse: true },
     { id: 34, reverse: false },
     { id: 42, reverse: false },
-    { id: 45, reverse: false },
+    { id: 45, reverse: false },  // positive toward Assertiveness
     { id: 66, reverse: false },
   ],
   emotionalStability: [
@@ -76,7 +80,7 @@ const TRAIT_QUESTIONS: Record<keyof TraitScores, Array<{ id: number; reverse: bo
     { id: 21, reverse: false },
     { id: 29, reverse: false },
     { id: 37, reverse: false },
-    { id: 45, reverse: true },
+    { id: 45, reverse: true },  // reverse/negative toward Interpersonal Orientation
     { id: 53, reverse: false },
     { id: 61, reverse: false },
     { id: 69, reverse: false },
@@ -144,6 +148,7 @@ function calculateTraitScore(
     sum += reverse ? reverseScore(response) : response;
   }
   const mean = sum / questions.length;
+  // Preserve exact formula: facet score = ((mean - 1) / 4) × 100
   const score = ((mean - 1) / 4) * 100;
   return Math.round(score * 10) / 10;
 }
@@ -175,9 +180,11 @@ function calculateSimilarity(
   const traits = Object.keys(candidateScores) as Array<keyof TraitScores>;
   let totalSimilarity = 0;
   for (const trait of traits) {
+    // Preserve formula: 100 - abs(candidate - benchmark)
     const traitSimilarity = 100 - Math.abs(candidateScores[trait] - benchmarkScores[trait]);
     totalSimilarity += traitSimilarity;
   }
+  // Overall similarity = arithmetic mean
   return Math.round((totalSimilarity / traits.length) * 10) / 10;
 }
 
@@ -236,8 +243,9 @@ function calculateQuality(
   return {
     status,
     flags,
-    straight_line_rate: Math.round(straightLineRate * 10) / 10,
-    consistency_score: consistencyScore,
+    straightLineRate: Math.round(straightLineRate * 10) / 10,
+    consistencyScore,
+    durationSeconds,
   };
 }
 
@@ -258,19 +266,85 @@ async function hashPassword(password: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function createAdminToken(): string {
+/**
+ * Create HMAC-signed admin session token
+ * Format: base64(payload).hmac-sha256-signature
+ */
+async function createAdminSession(): Promise<{ session: string; expiresAt: string }> {
+  const expiresAt = new Date(Date.now() + 10 * 60 * 60 * 1000); // 10 hours
   const payload = {
     role: 'admin',
-    exp: Date.now() + 10 * 60 * 60 * 1000, // 10 hours
+    exp: expiresAt.getTime(),
   };
-  // Simple base64 encoding (replace with proper JWT in production)
-  return btoa(JSON.stringify(payload));
+  
+  const payloadStr = JSON.stringify(payload);
+  const payloadB64 = btoa(payloadStr);
+  
+  // Sign with HMAC-SHA256
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(ADMIN_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(payloadB64)
+  );
+  
+  const signatureHex = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  
+  const session = `${payloadB64}.${signatureHex}`;
+  
+  return {
+    session,
+    expiresAt: expiresAt.toISOString(),
+  };
 }
 
-function verifyAdminToken(token: string): boolean {
+/**
+ * Verify HMAC-signed admin session token
+ */
+async function verifyAdminSession(session: string): Promise<boolean> {
   try {
-    const payload = JSON.parse(atob(token));
-    return payload.role === 'admin' && payload.exp > Date.now();
+    const parts = session.split('.');
+    if (parts.length !== 2) return false;
+    
+    const [payloadB64, signatureHex] = parts;
+    
+    // Verify signature
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(ADMIN_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+    
+    const signature = new Uint8Array(
+      signatureHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16))
+    );
+    
+    const valid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signature,
+      new TextEncoder().encode(payloadB64)
+    );
+    
+    if (!valid) return false;
+    
+    // Verify expiry
+    const payload = JSON.parse(atob(payloadB64));
+    if (payload.role !== 'admin') return false;
+    if (payload.exp <= Date.now()) return false;
+    
+    return true;
   } catch {
     return false;
   }
@@ -294,16 +368,36 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { operation } = body;
+    const { action } = body;
 
-    // Admin endpoints
-    if (operation === 'admin.login') {
+    if (!action) {
+      return new Response(
+        JSON.stringify({ error: 'Missing action field' }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        }
+      );
+    }
+
+    // Admin login
+    if (action === 'admin.login') {
       const { password } = body;
+      if (!password) {
+        return new Response(
+          JSON.stringify({ error: 'Missing password' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+      
       const hash = await hashPassword(password);
       
       if (hash !== ADMIN_PASSWORD_HASH) {
         return new Response(
-          JSON.stringify({ success: false, error: 'Invalid password' }),
+          JSON.stringify({ error: 'Invalid password' }),
           { 
             status: 401,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -311,23 +405,22 @@ serve(async (req) => {
         );
       }
 
-      const token = createAdminToken();
-      const expiresAt = Date.now() + 10 * 60 * 60 * 1000;
+      const sessionData = await createAdminSession();
 
       return new Response(
-        JSON.stringify({ success: true, data: { token, expires_at: expiresAt } }),
+        JSON.stringify(sessionData),
         { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    // Verify admin token for protected endpoints
-    if (operation.startsWith('admin.') && operation !== 'admin.login') {
+    // Verify admin session for protected endpoints
+    if (action.startsWith('admin.') && action !== 'admin.login') {
       const authHeader = req.headers.get('Authorization');
-      const token = authHeader?.replace('Bearer ', '');
+      const session = authHeader?.replace('Bearer ', '');
       
-      if (!token || !verifyAdminToken(token)) {
+      if (!session || !(await verifyAdminSession(session))) {
         return new Response(
-          JSON.stringify({ success: false, error: 'Unauthorized' }),
+          JSON.stringify({ error: 'Unauthorized' }),
           { 
             status: 401,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -336,7 +429,8 @@ serve(async (req) => {
       }
     }
 
-    if (operation === 'admin.list') {
+    // Admin list candidates
+    if (action === 'admin.list') {
       const { data, error } = await supabase
         .from('personality_candidates')
         .select('*')
@@ -345,24 +439,34 @@ serve(async (req) => {
       if (error) throw error;
 
       return new Response(
-        JSON.stringify({ success: true, data }),
+        JSON.stringify({ candidates: data }),
         { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    if (operation === 'admin.create') {
+    // Admin create candidate
+    if (action === 'admin.create') {
       const { name, email } = body;
       
+      if (!name) {
+        return new Response(
+          JSON.stringify({ error: 'Name is required' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
       const questionOrder = generateQuestionOrder();
 
       const { data, error } = await supabase
         .from('personality_candidates')
         .insert({
           name,
-          email: email || null,
-          access_token: crypto.randomUUID(),
-          status: 'invited',
+          email,
           question_order: questionOrder,
+          assessment_version: ASSESSMENT_VERSION,
         })
         .select()
         .single();
@@ -370,140 +474,244 @@ serve(async (req) => {
       if (error) throw error;
 
       return new Response(
-        JSON.stringify({ success: true, data }),
+        JSON.stringify({ candidate: data }),
         { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    if (operation === 'admin.benchmark') {
-      const { candidate_id } = body;
+    // Admin set benchmark
+    if (action === 'admin.benchmark') {
+      const { id } = body;
+      
+      if (!id) {
+        return new Response(
+          JSON.stringify({ error: 'Candidate ID is required' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
 
-      // Get the candidate
+      // Verify candidate exists and is completed
       const { data: candidate, error: fetchError } = await supabase
         .from('personality_candidates')
-        .select('*')
-        .eq('id', candidate_id)
+        .select('id, status, scores')
+        .eq('id', id)
         .single();
 
       if (fetchError || !candidate) {
-        throw new Error('Candidate not found');
+        return new Response(
+          JSON.stringify({ error: 'Candidate not found' }),
+          { 
+            status: 404,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
       }
 
-      if (candidate.status !== 'completed' || !candidate.scores) {
-        throw new Error('Only completed candidates with scores can be set as benchmark');
+      if (candidate.status !== 'completed') {
+        return new Response(
+          JSON.stringify({ error: 'Only completed assessments can be set as benchmark' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
       }
 
-      // Remove existing benchmark
+      // Remove previous benchmark
       await supabase
         .from('personality_candidates')
         .update({ is_benchmark: false })
         .eq('is_benchmark', true);
 
       // Set new benchmark
-      await supabase
+      const { error: updateError } = await supabase
         .from('personality_candidates')
         .update({ is_benchmark: true })
-        .eq('id', candidate_id);
+        .eq('id', id);
 
-      // Recalculate similarities for all completed candidates
-      const { data: allCandidates } = await supabase
+      if (updateError) throw updateError;
+
+      // Recalculate similarity for all completed candidates
+      const { data: completedCandidates, error: listError } = await supabase
         .from('personality_candidates')
-        .select('*')
-        .eq('status', 'completed')
-        .neq('id', candidate_id);
+        .select('id, scores')
+        .eq('status', 'completed');
 
-      if (allCandidates) {
-        for (const c of allCandidates) {
-          if (c.scores) {
-            const similarity = calculateSimilarity(c.scores, candidate.scores);
-            await supabase
-              .from('personality_candidates')
-              .update({ similarity_score: similarity })
-              .eq('id', c.id);
-          }
+      if (listError) throw listError;
+
+      const benchmarkScores = candidate.scores as TraitScores;
+
+      for (const c of completedCandidates || []) {
+        if (c.id === id) {
+          // Benchmark itself - no similarity score needed
+          await supabase
+            .from('personality_candidates')
+            .update({ similarity_score: null })
+            .eq('id', c.id);
+        } else if (c.scores) {
+          const similarity = calculateSimilarity(c.scores as TraitScores, benchmarkScores);
+          await supabase
+            .from('personality_candidates')
+            .update({ similarity_score: similarity })
+            .eq('id', c.id);
         }
       }
 
-      // Clear similarity for the benchmark itself
-      await supabase
-        .from('personality_candidates')
-        .update({ similarity_score: null })
-        .eq('id', candidate_id);
-
       return new Response(
-        JSON.stringify({ success: true }),
+        JSON.stringify({ ok: true }),
         { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    // Candidate endpoints
-    if (operation === 'candidate.get') {
-      const { access_token } = body;
+    // Candidate get
+    if (action === 'candidate.get') {
+      const { token } = body;
+      
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: 'Token is required' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
 
       const { data, error } = await supabase
         .from('personality_candidates')
-        .select('id, name, email, access_token, status, responses, question_order, started_at, completed_at, created_at')
-        .eq('access_token', access_token)
+        .select('id, name, status, responses, question_order, started_at, completed_at, assessment_version')
+        .eq('access_token', token)
         .single();
 
       if (error || !data) {
-        throw new Error('Candidate not found');
+        return new Response(
+          JSON.stringify({ error: 'Assessment not found' }),
+          { 
+            status: 404,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
       }
 
+      // Do NOT return scores, similarity, benchmark data to candidates
       return new Response(
-        JSON.stringify({ success: true, data }),
+        JSON.stringify({ candidate: data }),
         { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    if (operation === 'candidate.save') {
-      const { access_token, responses, is_complete } = body;
+    // Candidate save
+    if (action === 'candidate.save') {
+      const { token, responses, completed } = body;
+      
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: 'Token is required' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
 
-      // Get candidate
+      if (!responses || typeof responses !== 'object') {
+        return new Response(
+          JSON.stringify({ error: 'Responses are required' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      // Fetch candidate
       const { data: candidate, error: fetchError } = await supabase
         .from('personality_candidates')
         .select('*')
-        .eq('access_token', access_token)
+        .eq('access_token', token)
         .single();
 
       if (fetchError || !candidate) {
-        throw new Error('Candidate not found');
+        return new Response(
+          JSON.stringify({ error: 'Assessment not found' }),
+          { 
+            status: 404,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
       }
 
       if (candidate.status === 'completed') {
-        throw new Error('Assessment already completed');
-      }
-
-      const updates: any = { responses };
-
-      // Set started_at if this is the first save
-      if (!candidate.started_at) {
-        updates.started_at = new Date().toISOString();
-        updates.status = 'in_progress';
-      }
-
-      if (is_complete) {
-        // Validate all 72 questions answered
-        const questionIds = Array.from({ length: 72 }, (_, i) => i + 1);
-        for (const id of questionIds) {
-          if (responses[id] === undefined || responses[id] < 1 || responses[id] > 5) {
-            throw new Error(`Invalid or missing response for question ${id}`);
+        return new Response(
+          JSON.stringify({ error: 'Assessment already completed' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
           }
+        );
+      }
+
+      // Validate response values
+      for (const [key, value] of Object.entries(responses)) {
+        const questionId = parseInt(key);
+        if (isNaN(questionId) || questionId < 1 || questionId > 72) {
+          return new Response(
+            JSON.stringify({ error: `Invalid question ID: ${key}` }),
+            { 
+              status: 400,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            }
+          );
+        }
+        if (typeof value !== 'number' || value < 1 || value > 5 || !Number.isInteger(value)) {
+          return new Response(
+            JSON.stringify({ error: `Invalid response value for question ${key}: must be integer 1-5` }),
+            { 
+              status: 400,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            }
+          );
+        }
+      }
+
+      const startedAt = candidate.started_at ? new Date(candidate.started_at) : new Date();
+      const now = new Date();
+
+      let updateData: Record<string, unknown> = {
+        responses,
+        started_at: candidate.started_at || now.toISOString(),
+      };
+
+      // Update status
+      if (completed) {
+        // Require all 72 responses
+        if (Object.keys(responses).length !== 72) {
+          return new Response(
+            JSON.stringify({ error: 'All 72 questions must be answered to complete assessment' }),
+            { 
+              status: 400,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            }
+          );
         }
 
-        // Calculate duration
-        const startedAt = new Date(candidate.started_at || Date.now());
-        const completedAt = new Date();
-        const durationSeconds = Math.floor((completedAt.getTime() - startedAt.getTime()) / 1000);
-
-        // Calculate scores
         const scores = calculateScores(responses);
-
-        // Calculate quality
+        const durationSeconds = Math.floor((now.getTime() - startedAt.getTime()) / 1000);
         const quality = calculateQuality(responses, durationSeconds);
 
-        // Calculate similarity if there's a benchmark
-        let similarityScore = null;
+        updateData = {
+          ...updateData,
+          status: 'completed',
+          completed_at: now.toISOString(),
+          assessment_duration_seconds: durationSeconds,
+          scores,
+          quality_signals: quality,
+        };
+
+        // Calculate similarity if benchmark exists
         const { data: benchmark } = await supabase
           .from('personality_candidates')
           .select('scores')
@@ -511,45 +719,41 @@ serve(async (req) => {
           .single();
 
         if (benchmark && benchmark.scores) {
-          similarityScore = calculateSimilarity(scores, benchmark.scores);
+          const similarity = calculateSimilarity(scores, benchmark.scores as TraitScores);
+          updateData.similarity_score = similarity;
         }
-
-        updates.status = 'completed';
-        updates.completed_at = completedAt.toISOString();
-        updates.scores = scores;
-        updates.quality_signals = quality;
-        updates.assessment_duration_seconds = durationSeconds;
-        updates.similarity_score = similarityScore;
+      } else {
+        updateData.status = Object.keys(responses).length > 0 ? 'in_progress' : 'invited';
       }
-
-      updates.updated_at = new Date().toISOString();
 
       const { data: updated, error: updateError } = await supabase
         .from('personality_candidates')
-        .update(updates)
-        .eq('access_token', access_token)
-        .select('id, name, email, access_token, status, responses, question_order, started_at, completed_at, created_at')
+        .update(updateData)
+        .eq('access_token', token)
+        .select('id, name, status, responses, question_order, started_at, completed_at, assessment_version')
         .single();
 
       if (updateError) throw updateError;
 
+      // Do NOT return scores/similarity to candidate
       return new Response(
-        JSON.stringify({ success: true, data: updated }),
+        JSON.stringify({ candidate: updated }),
         { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
     return new Response(
-      JSON.stringify({ success: false, error: 'Unknown operation' }),
+      JSON.stringify({ error: 'Unknown action' }),
       { 
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       }
     );
+
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
       { 
         status: 500,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },

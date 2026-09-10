@@ -188,13 +188,13 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
                     <div>
                       <span className="text-sm text-gray-600">Consistency:</span>
                       <p className="font-medium text-gray-900">
-                        {candidate.quality_signals.consistency_score}%
+                        {candidate.quality_signals.consistencyScore}%
                       </p>
                     </div>
                     <div>
                       <span className="text-sm text-gray-600">Straight-line rate:</span>
                       <p className="font-medium text-gray-900">
-                        {candidate.quality_signals.straight_line_rate.toFixed(1)}%
+                        {candidate.quality_signals.straightLineRate.toFixed(1)}%
                       </p>
                     </div>
                   </div>
