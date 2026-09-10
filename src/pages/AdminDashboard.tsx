@@ -8,6 +8,7 @@ import { CandidateTable } from '../components/CandidateTable';
 import { CreateCandidateModal } from '../components/CreateCandidateModal';
 import { CandidateDetailsModal } from '../components/CandidateDetailsModal';
 import { OverviewCards } from '../components/OverviewCards';
+import { BulkDownloadButton } from '../components/BulkDownloadButton';
 
 export function AdminDashboard() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -134,6 +135,10 @@ export function AdminDashboard() {
             <OverviewCards candidates={candidates} />
 
             <div className="bg-white rounded-2xl shadow-lg border-2 border-yala-green/5 mt-6">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">All Candidates</h2>
+                <BulkDownloadButton candidates={filteredCandidates} />
+              </div>
               <div className="p-6 border-b-2 border-yala-green/5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex-1 max-w-md">
