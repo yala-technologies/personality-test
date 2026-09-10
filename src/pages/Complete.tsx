@@ -17,10 +17,18 @@ export function Complete() {
     setLoading(true);
     try {
       const data = await candidateGet(token);
+      console.log('Candidate data:', data);
       // Scores come from the backend after completion
-      setScores((data as any).scores || null);
+      const candidateScores = (data as any).scores || null;
+      console.log('Extracted scores:', candidateScores);
+      setScores(candidateScores);
+      
+      if (!candidateScores) {
+        console.warn('No scores found in candidate data');
+      }
     } catch (err) {
       console.error('Failed to load scores:', err);
+      alert('Failed to load scores. Please contact the admin.');
     } finally {
       setLoading(false);
     }
@@ -34,7 +42,7 @@ export function Complete() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-12 max-w-2xl w-full text-center animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-12 max-w-md w-full text-center animate-fade-in">
         <div className="relative inline-flex items-center justify-center mb-6">
           <div className="w-24 h-24 bg-yala-lime rounded-3xl flex items-center justify-center transform rotate-3 animate-pulse">
             <Check className="w-12 h-12 text-yala-green" strokeWidth={3} />
@@ -66,35 +74,44 @@ export function Complete() {
           </button>
         </div>
 
-        {showScores && scores && (
+        {showScores && (
           <div className="mt-6 text-left animate-fade-in">
-            <h2 className="text-xl font-bold text-yala-green mb-4 text-center">Your Trait Scores</h2>
-            <div className="space-y-3">
-              {Object.entries(scores).map(([trait, score]) => (
-                <div key={trait} className="bg-neutral-100 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-yala-green text-sm">
-                      {TRAIT_LABELS[trait as keyof TraitScores]}
-                    </span>
-                    <span className="text-xl font-bold text-yala-green">
-                      {score.toFixed(0)}
-                    </span>
-                  </div>
-                  <div className="w-full bg-white rounded-full h-2.5">
-                    <div
-                      className="bg-yala-lime rounded-full h-2.5 transition-all"
-                      style={{ width: `${score}%` }}
-                    />
-                  </div>
+            {scores ? (
+              <>
+                <h2 className="text-xl font-bold text-yala-green mb-4 text-center">Your Trait Scores</h2>
+                <div className="space-y-3">
+                  {Object.entries(scores).map(([trait, score]) => (
+                    <div key={trait} className="bg-neutral-100 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-yala-green text-sm">
+                          {TRAIT_LABELS[trait as keyof TraitScores]}
+                        </span>
+                        <span className="text-xl font-bold text-yala-green">
+                          {score.toFixed(0)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-white rounded-full h-2.5">
+                        <div
+                          className="bg-yala-lime rounded-full h-2.5 transition-all"
+                          style={{ width: `${score}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            
-            <div className="mt-6 bg-yala-lime-soft rounded-2xl p-3">
-              <p className="text-xs text-yala-green">
-                These scores represent your personality traits on a scale of 0-100.
-              </p>
-            </div>
+                
+                <div className="mt-6 bg-yala-lime-soft rounded-2xl p-3">
+                  <p className="text-xs text-yala-green">
+                    These scores represent your personality traits on a scale of 0-100.
+                  </p>
+                </div>
+              </>
+            ) : !loading ? (
+              <div className="text-center py-6">
+                <p className="text-yala-green/60 mb-2">Your scores are still being calculated.</p>
+                <p className="text-sm text-yala-green/50">Please check back with your admin for your results.</p>
+              </div>
+            ) : null}
           </div>
         )}
 
