@@ -1,18 +1,41 @@
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Candidate } from '../lib/types';
 import { formatDate, capitalizeName } from '../lib/utils';
+
+type SortField = 'name' | 'email' | 'status' | 'created' | 'completed' | 'similarity';
+type SortDirection = 'asc' | 'desc';
 
 interface Props {
   candidates: Candidate[];
   onSelectCandidate: (candidate: Candidate) => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
 }
 
-export function CandidateTable({ candidates, onSelectCandidate }: Props) {
+export function CandidateTable({ 
+  candidates, 
+  onSelectCandidate, 
+  sortField, 
+  sortDirection, 
+  onSort 
+}: Props) {
   if (candidates.length === 0) {
     return (
       <div className="p-8 text-center text-gray-500">
         No candidates found. Create your first candidate to get started.
       </div>
+    );
+  }
+
+  function renderSortIcon(field: SortField) {
+    if (sortField !== field) {
+      return <ArrowUp className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-50" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ArrowUp className="w-3 h-3 text-yala-green" />
+    ) : (
+      <ArrowDown className="w-3 h-3 text-yala-green" />
     );
   }
 
@@ -45,23 +68,59 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
       <table className="w-full border-collapse">
         <thead className="bg-[#f2f4f5]">
           <tr>
-            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider">
-              Candidate
+            <th 
+              onClick={() => onSort('name')}
+              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                Candidate
+                {renderSortIcon('name')}
+              </div>
             </th>
-            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden md:table-cell">
-              Email
+            <th 
+              onClick={() => onSort('email')}
+              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden md:table-cell cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                Email
+                {renderSortIcon('email')}
+              </div>
             </th>
-            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider">
-              Status
+            <th 
+              onClick={() => onSort('status')}
+              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                Status
+                {renderSortIcon('status')}
+              </div>
             </th>
-            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden lg:table-cell">
-              Created
+            <th 
+              onClick={() => onSort('created')}
+              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden lg:table-cell cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                Created
+                {renderSortIcon('created')}
+              </div>
             </th>
-            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden lg:table-cell">
-              Completed
+            <th 
+              onClick={() => onSort('completed')}
+              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden lg:table-cell cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                Completed
+                {renderSortIcon('completed')}
+              </div>
             </th>
-            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden xl:table-cell">
-              Similarity
+            <th 
+              onClick={() => onSort('similarity')}
+              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden xl:table-cell cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                Similarity
+                {renderSortIcon('similarity')}
+              </div>
             </th>
             <th className="h-11 px-6 py-3"></th>
           </tr>

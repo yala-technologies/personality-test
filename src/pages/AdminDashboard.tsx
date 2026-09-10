@@ -10,12 +10,17 @@ import { CandidateDetailsModal } from '../components/CandidateDetailsModal';
 import { OverviewCards } from '../components/OverviewCards';
 import { BulkDownloadButton } from '../components/BulkDownloadButton';
 
+type SortField = 'name' | 'email' | 'status' | 'created' | 'completed' | 'similarity';
+type SortDirection = 'asc' | 'desc';
+
 export function AdminDashboard() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState<SortField>('created');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const navigate = useNavigate();
@@ -75,18 +80,45 @@ export function AdminDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  // Sort: benchmark first, then by similarity (descending), then by created date (descending)
-  const sortedCandidates = [...filteredCandidates].sort((a, b) => {
-    if (a.is_benchmark) return -1;
-    if (b.is_benchmark) return 1;
-
-    if (a.similarity_score !== null && b.similarity_score !== null) {
-      return b.similarity_score - a.similarity_score;
+  function handleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
     }
-    if (a.similarity_score !== null) return -1;
-    if (b.similarity_score !== null) return 1;
+  }
 
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  // Sort candidates
+  const sortedCandidates = [...filteredCandidates].sort((a, b) => {
+    let comparison = 0;
+
+    switch (sortField) {
+      case 'name':
+        comparison = a.name.localeCompare(b.name);
+        break;
+      case 'email':
+        comparison = (a.email || '').localeCompare(b.email || '');
+        break;
+      case 'status':
+        comparison = a.status.localeCompare(b.status);
+        break;
+      case 'created':
+        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        break;
+      case 'completed':
+        const aCompleted = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+        const bCompleted = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+        comparison = aCompleted - bCompleted;
+        break;
+      case 'similarity':
+        const aSimilarity = a.similarity_score ?? -1;
+        const bSimilarity = b.similarity_score ?? -1;
+        comparison = aSimilarity - bSimilarity;
+        break;
+    }
+
+    return sortDirection === 'asc' ? comparison : -comparison;
   });
 
   return (
@@ -178,6 +210,9 @@ export function AdminDashboard() {
               <CandidateTable
                 candidates={sortedCandidates}
                 onSelectCandidate={setSelectedCandidate}
+                sortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
               />
             </div>
           </>
