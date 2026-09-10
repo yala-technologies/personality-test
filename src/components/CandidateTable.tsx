@@ -1,4 +1,4 @@
-import { ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 import type { Candidate } from '../lib/types';
 import { formatDate, capitalizeName } from '../lib/utils';
 
@@ -28,14 +28,28 @@ export function CandidateTable({
     );
   }
 
-  function renderSortIcon(field: SortField) {
-    if (sortField !== field) {
-      return <ArrowUp className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-50" />;
-    }
-    return sortDirection === 'asc' ? (
-      <ArrowUp className="w-3 h-3 text-yala-green" />
-    ) : (
-      <ArrowDown className="w-3 h-3 text-yala-green" />
+  function renderSortButton(field: SortField, label: string) {
+    const isActive = sortField === field;
+    const isAsc = sortDirection === 'asc';
+    
+    return (
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className={`
+          inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium uppercase tracking-wider
+          transition-all
+          ${isActive 
+            ? 'bg-yala-lime text-yala-green border-2 border-yala-green/20' 
+            : 'bg-white text-neutral-600 border-2 border-neutral-200 hover:border-yala-green/20 hover:bg-yala-lime-soft'
+          }
+        `}
+      >
+        <span>{label}</span>
+        <ChevronDown 
+          className={`w-3 h-3 transition-transform ${isActive && isAsc ? 'rotate-180' : ''}`}
+        />
+      </button>
     );
   }
 
@@ -68,61 +82,25 @@ export function CandidateTable({
       <table className="w-full border-collapse">
         <thead className="bg-[#f2f4f5]">
           <tr>
-            <th 
-              onClick={() => onSort('name')}
-              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                Candidate
-                {renderSortIcon('name')}
-              </div>
+            <th className="h-16 px-6 py-3 text-left">
+              {renderSortButton('name', 'Candidate')}
             </th>
-            <th 
-              onClick={() => onSort('email')}
-              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden md:table-cell cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                Email
-                {renderSortIcon('email')}
-              </div>
+            <th className="h-16 px-6 py-3 text-left hidden md:table-cell">
+              {renderSortButton('email', 'Email')}
             </th>
-            <th 
-              onClick={() => onSort('status')}
-              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                Status
-                {renderSortIcon('status')}
-              </div>
+            <th className="h-16 px-6 py-3 text-left">
+              {renderSortButton('status', 'Status')}
             </th>
-            <th 
-              onClick={() => onSort('created')}
-              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden lg:table-cell cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                Created
-                {renderSortIcon('created')}
-              </div>
+            <th className="h-16 px-6 py-3 text-left hidden lg:table-cell">
+              {renderSortButton('created', 'Created')}
             </th>
-            <th 
-              onClick={() => onSort('completed')}
-              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden lg:table-cell cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                Completed
-                {renderSortIcon('completed')}
-              </div>
+            <th className="h-16 px-6 py-3 text-left hidden lg:table-cell">
+              {renderSortButton('completed', 'Completed')}
             </th>
-            <th 
-              onClick={() => onSort('similarity')}
-              className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden xl:table-cell cursor-pointer hover:bg-[#e8eaeb] transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                Similarity
-                {renderSortIcon('similarity')}
-              </div>
+            <th className="h-16 px-6 py-3 text-left hidden xl:table-cell">
+              {renderSortButton('similarity', 'Similarity')}
             </th>
-            <th className="h-11 px-6 py-3"></th>
+            <th className="h-16 px-6 py-3"></th>
           </tr>
         </thead>
         <tbody className="bg-white">
