@@ -252,9 +252,9 @@ export function InteractiveAssessment() {
             <div className="text-center mb-6 md:mb-8 animate-slide-up">
               <div className="flex items-center justify-center mb-3">
                 <img 
-                  src="/assets/yala-logo.svg" 
+                  src="/assets/yala-star.svg" 
                   alt="Yala" 
-                  className="h-8 md:h-10 w-auto"
+                  className="h-10 md:h-12 w-auto"
                 />
               </div>
               <h1 className="text-3xl md:text-4xl font-bold text-yala-green mb-2">
