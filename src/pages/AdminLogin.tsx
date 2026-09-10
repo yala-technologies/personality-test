@@ -31,17 +31,17 @@ export function AdminLogin() {
         <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-8">
           <div className="flex items-center justify-center mb-6">
             <img 
-              src="/assets/yala-logo.svg" 
+              src="/assets/yala-star.svg" 
               alt="Yala" 
-              className="h-12 w-auto"
+              className="h-16 w-16"
             />
           </div>
           
           <h1 className="text-3xl font-bold text-center text-yala-green mb-2">
-            Yala Hiring
+            Yala Hiring - Big 5
           </h1>
           <p className="text-center text-yala-green/70 mb-8 font-medium">
-            BDR Personality Assessment
+            Personality Assessment Portal
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
