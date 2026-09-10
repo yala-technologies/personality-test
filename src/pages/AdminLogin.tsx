@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { adminLogin } from '../lib/api';
 import { saveSession } from '../lib/auth';
@@ -9,7 +8,6 @@ export function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,10 +17,10 @@ export function AdminLogin() {
     try {
       const session = await adminLogin(password);
       saveSession(session);
-      navigate('/admin', { replace: true });
+      // Force full page reload to ensure AdminRoute re-checks session
+      window.location.href = '/admin';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
       setLoading(false);
     }
   }

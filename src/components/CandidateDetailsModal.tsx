@@ -83,7 +83,7 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
             <div className="flex items-center gap-2 mt-1">
               {getStatusBadge(candidate.status)}
               {candidate.is_benchmark && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-700">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yala-lime-soft text-yala-green">
                   Benchmark
                 </span>
               )}
@@ -133,7 +133,7 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
                 />
                 <button
                   onClick={handleCopy}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-yala-green text-yala-lime rounded-xl hover:bg-yala-green/90 focus:outline-none focus:ring-2 focus:ring-yala-lime transition-colors font-medium"
                 >
                   {copied ? (
                     <>
@@ -223,7 +223,7 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
                   <button
                     onClick={handleSetBenchmark}
                     disabled={settingBenchmark}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-yala-green text-yala-lime rounded-xl hover:bg-yala-green/90 focus:outline-none focus:ring-2 focus:ring-yala-lime disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                   >
                     <Star className="w-4 h-4" />
                     {settingBenchmark ? 'Setting...' : 'Set as benchmark'}
