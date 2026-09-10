@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Copy, Check, Star, AlertCircle, Download } from 'lucide-react';
+import { X, Copy, Check, Star, AlertCircle, Download, ChevronDown } from 'lucide-react';
 import type { Candidate } from '../lib/types';
 import { formatDate, formatDateTime, formatDuration, copyToClipboard, capitalizeName, TRAIT_LABELS } from '../lib/utils';
 import { adminSetBenchmark } from '../lib/api';
@@ -15,6 +15,7 @@ interface Props {
 export function CandidateDetailsModal({ candidate, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const [settingBenchmark, setSettingBenchmark] = useState(false);
+  const [showFormatMenu, setShowFormatMenu] = useState(false);
 
   function generateMarkdown(): string {
     const md: string[] = [];
@@ -83,17 +84,204 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
     return md.join('\n');
   }
 
-  function downloadMarkdown() {
-    const markdown = generateMarkdown();
-    const blob = new Blob([markdown], { type: 'text/markdown' });
+  function generateCSV(): string {
+    const rows: string[][] = [];
+    
+    // Header
+    rows.push(['Field', 'Value']);
+    
+    // Candidate info
+    rows.push(['Name', capitalizeName(candidate.name)]);
+    rows.push(['Email', candidate.email || 'Not provided']);
+    rows.push(['Status', candidate.status]);
+    rows.push(['Created', formatDate(candidate.created_at)]);
+    rows.push(['Started', formatDate(candidate.started_at)]);
+    rows.push(['Completed', formatDate(candidate.completed_at)]);
+    if (candidate.assessment_duration_seconds) {
+      rows.push(['Duration', formatDuration(candidate.assessment_duration_seconds)]);
+    }
+    rows.push(['Assessment Version', candidate.assessment_version || 'V1']);
+    rows.push(['Is Benchmark', candidate.is_benchmark ? 'Yes' : 'No']);
+    rows.push(['']);
+    
+    // Trait scores
+    if (candidate.scores) {
+      rows.push(['Trait Scores', '']);
+      Object.entries(candidate.scores).forEach(([trait, score]) => {
+        const label = TRAIT_LABELS[trait as keyof typeof TRAIT_LABELS];
+        rows.push([label, score.toFixed(1)]);
+      });
+      rows.push(['']);
+    }
+    
+    // Benchmark comparison
+    if (candidate.similarity_score !== null && !candidate.is_benchmark) {
+      rows.push(['Benchmark Similarity', candidate.similarity_score.toFixed(1) + '%']);
+      rows.push(['']);
+    }
+    
+    // Quality signals
+    if (candidate.quality_signals) {
+      rows.push(['Response Quality', '']);
+      rows.push(['Status', candidate.quality_signals.status]);
+      rows.push(['Straight-line Rate', (candidate.quality_signals.straightLineRate * 100).toFixed(1) + '%']);
+      rows.push(['Consistency Score', candidate.quality_signals.consistencyScore.toFixed(2)]);
+      if (candidate.quality_signals.durationSeconds) {
+        rows.push(['Duration', formatDuration(candidate.quality_signals.durationSeconds)]);
+      }
+      if (candidate.quality_signals.flags.length > 0) {
+        rows.push(['Flags', candidate.quality_signals.flags.join('; ')]);
+      }
+    }
+    
+    return rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  }
+
+  function generateJSON(): string {
+    const data = {
+      name: capitalizeName(candidate.name),
+      email: candidate.email || null,
+      status: candidate.status,
+      isBenchmark: candidate.is_benchmark,
+      dates: {
+        created: candidate.created_at,
+        started: candidate.started_at,
+        completed: candidate.completed_at,
+      },
+      duration: candidate.assessment_duration_seconds ? formatDuration(candidate.assessment_duration_seconds) : null,
+      assessmentVersion: candidate.assessment_version || 'V1',
+      traitScores: candidate.scores ? Object.entries(candidate.scores).reduce((acc, [trait, score]) => {
+        acc[TRAIT_LABELS[trait as keyof typeof TRAIT_LABELS]] = Number(score.toFixed(1));
+        return acc;
+      }, {} as Record<string, number>) : null,
+      benchmarkSimilarity: candidate.is_benchmark ? null : candidate.similarity_score,
+      qualitySignals: candidate.quality_signals ? {
+        status: candidate.quality_signals.status,
+        straightLineRate: Number((candidate.quality_signals.straightLineRate * 100).toFixed(1)),
+        consistencyScore: Number(candidate.quality_signals.consistencyScore.toFixed(2)),
+        duration: candidate.quality_signals.durationSeconds ? formatDuration(candidate.quality_signals.durationSeconds) : null,
+        flags: candidate.quality_signals.flags,
+      } : null,
+      generatedAt: new Date().toISOString(),
+    };
+    
+    return JSON.stringify(data, null, 2);
+  }
+
+  function generatePDF(): string {
+    // Generate HTML for PDF
+    let html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${capitalizeName(candidate.name)} - Assessment Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; }
+    h1 { color: #053321; border-bottom: 3px solid #a1e55e; padding-bottom: 10px; }
+    h2 { color: #053321; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f5f5f5; font-weight: bold; }
+    .benchmark-badge { background: #a1e55e; color: #053321; padding: 5px 10px; border-radius: 5px; font-weight: bold; display: inline-block; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; font-size: 12px; color: #666; }
+    .trait-score { display: flex; align-items: center; margin: 10px 0; }
+    .trait-label { flex: 0 0 300px; }
+    .trait-value { font-weight: bold; color: #053321; }
+  </style>
+</head>
+<body>
+  <h1>${capitalizeName(candidate.name)}</h1>
+  ${candidate.is_benchmark ? '<p><span class="benchmark-badge">⭐ Benchmark Candidate</span></p>' : ''}
+  
+  <h2>Candidate Information</h2>
+  <table>
+    <tr><th>Email</th><td>${candidate.email || 'Not provided'}</td></tr>
+    <tr><th>Status</th><td>${candidate.status}</td></tr>
+    <tr><th>Created</th><td>${formatDate(candidate.created_at)}</td></tr>
+    <tr><th>Started</th><td>${formatDate(candidate.started_at)}</td></tr>
+    <tr><th>Completed</th><td>${formatDate(candidate.completed_at)}</td></tr>
+    ${candidate.assessment_duration_seconds ? `<tr><th>Duration</th><td>${formatDuration(candidate.assessment_duration_seconds)}</td></tr>` : ''}
+    <tr><th>Assessment Version</th><td>${candidate.assessment_version || 'V1'}</td></tr>
+  </table>
+`;
+
+    if (candidate.scores) {
+      html += '<h2>Trait Scores</h2><table>';
+      Object.entries(candidate.scores).forEach(([trait, score]) => {
+        const label = TRAIT_LABELS[trait as keyof typeof TRAIT_LABELS];
+        html += `<tr><td>${label}</td><td class="trait-value">${score.toFixed(1)}</td></tr>`;
+      });
+      html += '</table>';
+    }
+
+    if (candidate.similarity_score !== null && !candidate.is_benchmark) {
+      html += `<h2>Benchmark Comparison</h2><p><strong>Overall Similarity:</strong> ${candidate.similarity_score.toFixed(1)}%</p>`;
+    }
+
+    if (candidate.quality_signals) {
+      html += '<h2>Response Quality</h2><table>';
+      html += `<tr><th>Status</th><td>${candidate.quality_signals.status}</td></tr>`;
+      html += `<tr><th>Straight-line Rate</th><td>${(candidate.quality_signals.straightLineRate * 100).toFixed(1)}%</td></tr>`;
+      html += `<tr><th>Consistency Score</th><td>${candidate.quality_signals.consistencyScore.toFixed(2)}</td></tr>`;
+      if (candidate.quality_signals.durationSeconds) {
+        html += `<tr><th>Duration</th><td>${formatDuration(candidate.quality_signals.durationSeconds)}</td></tr>`;
+      }
+      if (candidate.quality_signals.flags.length > 0) {
+        html += `<tr><th>Flags</th><td>${candidate.quality_signals.flags.join(', ')}</td></tr>`;
+      }
+      html += '</table>';
+    }
+
+    html += `
+  <div class="footer">
+    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+    <p><strong>Source:</strong> Yala Big 5 Personality Assessment Portal</p>
+  </div>
+</body>
+</html>`;
+
+    return html;
+  }
+
+  function downloadFile(format: 'markdown' | 'csv' | 'json' | 'pdf') {
+    const fileName = candidate.name.replace(/\s+/g, '_');
+    let content: string;
+    let mimeType: string;
+    let extension: string;
+
+    switch (format) {
+      case 'markdown':
+        content = generateMarkdown();
+        mimeType = 'text/markdown';
+        extension = 'md';
+        break;
+      case 'csv':
+        content = generateCSV();
+        mimeType = 'text/csv';
+        extension = 'csv';
+        break;
+      case 'json':
+        content = generateJSON();
+        mimeType = 'application/json';
+        extension = 'json';
+        break;
+      case 'pdf':
+        content = generatePDF();
+        mimeType = 'text/html';
+        extension = 'html'; // HTML that can be printed to PDF
+        break;
+    }
+
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${candidate.name.replace(/\s+/g, '_')}_assessment.md`;
+    a.download = `${fileName}_assessment.${extension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setShowFormatMenu(false);
   }
 
   const assessmentUrl = `${window.location.origin}/assessment/${candidate.access_token}`;
@@ -170,14 +358,45 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={downloadMarkdown}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-yala-green hover:bg-yala-lime-soft rounded-xl transition-all font-medium"
-              title="Download as Markdown"
-            >
-              <Download className="w-4 h-4" />
-              Download
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowFormatMenu(!showFormatMenu)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-yala-green hover:bg-yala-lime-soft rounded-xl transition-all font-medium"
+              >
+                <Download className="w-4 h-4" />
+                Download
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {showFormatMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border-2 border-yala-green/10 py-2 z-10">
+                  <button
+                    onClick={() => downloadFile('markdown')}
+                    className="w-full text-left px-4 py-2 text-sm text-yala-black hover:bg-yala-lime-soft transition-colors"
+                  >
+                    Markdown (.md)
+                  </button>
+                  <button
+                    onClick={() => downloadFile('csv')}
+                    className="w-full text-left px-4 py-2 text-sm text-yala-black hover:bg-yala-lime-soft transition-colors"
+                  >
+                    CSV (.csv)
+                  </button>
+                  <button
+                    onClick={() => downloadFile('json')}
+                    className="w-full text-left px-4 py-2 text-sm text-yala-black hover:bg-yala-lime-soft transition-colors"
+                  >
+                    JSON (.json)
+                  </button>
+                  <button
+                    onClick={() => downloadFile('pdf')}
+                    className="w-full text-left px-4 py-2 text-sm text-yala-black hover:bg-yala-lime-soft transition-colors"
+                  >
+                    PDF/HTML (.html)
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
