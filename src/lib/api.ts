@@ -177,13 +177,14 @@ export async function candidateSave(
 /**
  * Candidate get results (scores only)
  * Backend expects: { action: 'candidate.results', token: string }
- * Backend returns: { scores: TraitScores }
+ * Backend returns: { results: { scores: TraitScores, assessmentVersion: string } }
  * 
  * Response deliberately limited to candidate's own nine trait scores.
  * Does NOT include: quality_signals, similarity_score, benchmark data, or other candidates.
  */
 export async function candidateResults(accessToken: string): Promise<{
   scores: TraitScores | null;
+  assessmentVersion?: string;
 }> {
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
@@ -202,5 +203,5 @@ export async function candidateResults(accessToken: string): Promise<{
   }
 
   const result = await response.json();
-  return result;
+  return result.results;
 }
