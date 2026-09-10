@@ -196,7 +196,7 @@ Once deployment is complete:
 3. **Test admin login:**
    - Navigate to: `https://big5.useyala.com/admin`
    - Try incorrect password (should fail)
-   - Login with `Yala123` (should succeed)
+   - Login with admin password (should succeed)
 
 4. **Test assessment flow:**
    - Create a test candidate
@@ -358,7 +358,7 @@ If you need to rollback:
 
 **Production URL:** https://big5.useyala.com
 **Admin URL:** https://big5.useyala.com/admin
-**Password:** Yala123
+**Password:** Contact admin for credentials
 **Repository:** yala-technologies/personality-test
 **Branch:** main
 **Supabase URL:** https://sbbfsvdzeaxiypiokhqi.supabase.co

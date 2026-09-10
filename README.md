@@ -121,7 +121,7 @@ The Edge Function requires:
 
 The admin dashboard uses a temporary password-based session system:
 
-**Password:** `Yala123`
+**Password:** Contact admin for credentials
 
 The password is **never** stored in the frontend bundle. The plaintext password is hashed (SHA-256) and verified server-side in the Edge Function. On successful login, the backend returns a signed session token valid for 10 hours.
 

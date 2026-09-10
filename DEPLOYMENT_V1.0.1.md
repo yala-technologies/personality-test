@@ -92,7 +92,7 @@ curl -X POST https://sbbfsvdzeaxiypiokhqi.supabase.co/functions/v1/personality-a
 # 2. Login with correct password
 curl -X POST https://sbbfsvdzeaxiypiokhqi.supabase.co/functions/v1/personality-api \
   -H "Content-Type: application/json" \
-  -d '{"action":"admin.login","password":"Yala123"}'
+  -d '{"action":"admin.login","password":"YOUR_ADMIN_PASSWORD"}'
 
 # Expected: {"session":"<base64>.<hmac>","expiresAt":"..."}
 # Save the session token
@@ -162,7 +162,7 @@ curl -X POST https://sbbfsvdzeaxiypiokhqi.supabase.co/functions/v1/personality-a
 ### UI Verification
 
 1. **Admin Dashboard**: https://big5.useyala.com/admin
-   - Login with password: `Yala123`
+   - Login with admin password (contact admin for credentials)
    - Wrong password should be rejected
    - Create test candidate
    - Verify assessment_version is displayed
@@ -281,11 +281,8 @@ git push origin main --force
 
 ### Admin Password
 
-**OLD:** Incorrect SHA-256 hash (claimed to be "Yala123" but wasn't)
-**NEW:** Correct SHA-256 hash for "Yala123":
-```
-11d16afc298bebd8153b31234beda426bca99b74a759978979b7193c0f56bf19
-```
+**ADMIN_PASSWORD_HASH:** SHA-256 hash of the admin password is stored in the Edge Function.
+Contact admin for password setup and rotation procedures.
 
 ### Candidate Data Protection
 

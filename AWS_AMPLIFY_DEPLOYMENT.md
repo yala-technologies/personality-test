@@ -92,7 +92,7 @@ The build typically takes 2-3 minutes.
 After deployment completes:
 
 1. Click the generated URL (e.g., `https://main.d1234567890.amplifyapp.com`)
-2. Test the admin login at `/admin` (password: `Yala123`)
+2. Test the admin login at `/admin` (use admin credentials)
 3. Create a test candidate
 4. Complete the assessment
 5. Verify the admin dashboard displays results correctly

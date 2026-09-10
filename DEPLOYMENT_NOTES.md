@@ -53,7 +53,7 @@ npm run dev
 
 ### Admin Access
 
-**Password:** `Yala123`
+**Password:** Contact admin for credentials
 
 This is a temporary password gate. To replace with proper Supabase Auth:
 1. Enable Email Auth in Supabase dashboard
@@ -108,7 +108,7 @@ Before production use, verify:
 1. ✅ **Admin Login**
    - Go to `/admin`
    - Try incorrect password (should fail)
-   - Log in with `Yala123` (should succeed)
+   - Log in with admin password (should succeed)
 
 2. ✅ **Create Candidate**
    - Click "Create candidate"
@@ -146,7 +146,7 @@ Before production use, verify:
    - Check Edge Function responses contain no sensitive data for candidate endpoints
    - Verify password hash not in frontend bundle:
      ```bash
-     grep -r "Yala123" dist/
+     grep -r "ADMIN_PASSWORD" dist/
      # Should return nothing
      ```
 

@@ -4,7 +4,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 // Assessment version constant
 export const ASSESSMENT_VERSION = 'YALA_BDR_PERSONALITY_V1';
 
-// Password hash for "Yala123" (SHA-256) - CORRECT HASH
+// Admin password hash (SHA-256) - Contact admin for password rotation
 const ADMIN_PASSWORD_HASH = '11d16afc298bebd8153b31234beda426bca99b74a759978979b7193c0f56bf19';
 
 // HMAC secret for signing admin sessions

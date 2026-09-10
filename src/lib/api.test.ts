@@ -27,7 +27,7 @@ describe('API Client', () => {
         }),
       });
 
-      await adminLogin('Yala123');
+      await adminLogin('test-password');
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.supabase.co/functions/v1/personality-api',
@@ -36,7 +36,7 @@ describe('API Client', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'admin.login',
-            password: 'Yala123',
+            password: 'test-password',
           }),
         }
       );
@@ -52,7 +52,7 @@ describe('API Client', () => {
         }),
       });
 
-      const result = await adminLogin('Yala123');
+      const result = await adminLogin('test-password');
 
       expect(result).toEqual({
         token: 'test-session-token',
