@@ -44,7 +44,7 @@ export function AdminDashboard() {
 
   function handleLogout() {
     clearSession();
-    navigate('/admin', { replace: true });
+    window.location.href = '/admin';
   }
 
   async function handleCreateCandidate(name: string, email?: string) {
