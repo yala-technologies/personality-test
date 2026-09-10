@@ -125,9 +125,9 @@ export function Assessment() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <img 
-            src="/assets/yala-logo.svg" 
+            src="/assets/yala-star.svg" 
             alt="Loading" 
-            className="inline-block h-10 w-auto animate-spin"
+            className="inline-block h-12 w-12 animate-spin"
           />
           <p className="mt-2 text-gray-600">Loading assessment...</p>
         </div>

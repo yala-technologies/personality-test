@@ -119,9 +119,9 @@ export function AdminDashboard() {
         {loading ? (
           <div className="text-center py-12">
             <img 
-              src="/assets/yala-logo.svg" 
+              src="/assets/yala-star.svg" 
               alt="Loading" 
-              className="inline-block h-12 w-auto animate-spin mx-auto"
+              className="inline-block h-16 w-16 animate-spin mx-auto"
             />
             <p className="mt-4 text-yala-green font-medium">Loading candidates...</p>
           </div>
