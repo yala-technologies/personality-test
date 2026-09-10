@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { candidateGet } from '../lib/api';
+import { candidateResults } from '../lib/api';
 import type { TraitScores } from '../lib/types';
 import { TRAIT_LABELS } from '../lib/utils';
 
@@ -16,15 +16,12 @@ export function Complete() {
     
     setLoading(true);
     try {
-      const data = await candidateGet(token);
-      console.log('Candidate data:', data);
-      // Scores come from the backend after completion
-      const candidateScores = (data as any).scores || null;
-      console.log('Extracted scores:', candidateScores);
-      setScores(candidateScores);
+      const data = await candidateResults(token);
+      console.log('Results data:', data);
+      setScores(data.scores);
       
-      if (!candidateScores) {
-        console.warn('No scores found in candidate data');
+      if (!data.scores) {
+        console.warn('No scores found in results');
       }
     } catch (err) {
       console.error('Failed to load scores:', err);

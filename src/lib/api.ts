@@ -1,4 +1,4 @@
-import type { AdminCandidate, CandidateAssessment, AdminSession } from './types';
+import type { AdminCandidate, CandidateAssessment, AdminSession, TraitScores, QualitySignals } from './types';
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/personality-api`;
 
@@ -172,4 +172,34 @@ export async function candidateSave(
 
   const result = await response.json();
   return result.candidate;
+}
+
+/**
+ * Candidate get results (scores)
+ * Backend expects: { action: 'candidate.results', token: string }
+ * Backend returns: { scores: TraitScores, quality_signals?: QualitySignals, similarity_score?: number }
+ */
+export async function candidateResults(accessToken: string): Promise<{
+  scores: TraitScores | null;
+  quality_signals?: QualitySignals;
+  similarity_score?: number | null;
+}> {
+  const response = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      action: 'candidate.results',
+      token: accessToken,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch results' }));
+    throw new Error(error.error || 'Failed to fetch results');
+  }
+
+  const result = await response.json();
+  return result;
 }
