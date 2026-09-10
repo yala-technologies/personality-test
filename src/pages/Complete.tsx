@@ -39,7 +39,7 @@ export function Complete() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-12 max-w-md w-full text-center animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-8 md:p-12 max-w-md md:max-w-4xl w-full text-center animate-fade-in">
         <div className="relative inline-flex items-center justify-center mb-6">
           <div className="w-24 h-24 bg-yala-lime rounded-3xl flex items-center justify-center transform rotate-3 animate-pulse">
             <Check className="w-12 h-12 text-yala-green" strokeWidth={3} />
@@ -75,8 +75,8 @@ export function Complete() {
           <div className="mt-6 text-left animate-fade-in">
             {scores ? (
               <>
-                <h2 className="text-xl font-bold text-yala-green mb-4 text-center">Your Trait Scores</h2>
-                <div className="space-y-3">
+                <h2 className="text-xl md:text-2xl font-bold text-yala-green mb-6 text-center">Your Trait Scores</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.entries(scores).map(([trait, score]) => (
                     <div key={trait} className="bg-neutral-100 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-2">
