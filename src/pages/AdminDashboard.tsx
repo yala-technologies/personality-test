@@ -89,7 +89,7 @@ export function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-yala-cream">
+    <div className="min-h-screen bg-neutral-100">
       <header className="bg-white border-b-2 border-yala-green/5 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
@@ -144,7 +144,7 @@ export function AdminDashboard() {
                         placeholder="Search by name or email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-yala-cream border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all"
+                        className="w-full pl-10 pr-4 py-3 bg-white border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all"
                       />
                     </div>
                   </div>
@@ -153,7 +153,7 @@ export function AdminDashboard() {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-4 py-3 bg-yala-cream border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all font-medium text-yala-green"
+                      className="px-4 py-3 bg-white border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all font-medium text-yala-green"
                     >
                       <option value="all">All statuses</option>
                       <option value="invited">Invited</option>

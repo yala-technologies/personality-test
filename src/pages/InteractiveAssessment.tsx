@@ -195,7 +195,7 @@ export function InteractiveAssessment() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-yala-cream">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
           <img 
             src="/assets/yala-star.svg" 
@@ -210,7 +210,7 @@ export function InteractiveAssessment() {
 
   if (error || !candidate) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-yala-cream px-4">
+      <div className="min-h-screen flex items-center justify-center bg-white px-4">
         <div className="bg-white rounded-2xl shadow-lg border-2 border-yala-green/10 p-8 max-w-md text-center">
           <p className="text-red-600 font-medium">{error || 'Assessment not found'}</p>
         </div>
@@ -230,7 +230,7 @@ export function InteractiveAssessment() {
   const firstName = candidate.name.split(' ')[0];
 
   return (
-    <div className="min-h-screen bg-yala-cream">
+    <div className="min-h-screen bg-white">
       <div className="fixed top-0 left-0 right-0 h-1 bg-yala-green/10 z-50">
         <div
           className="h-full bg-yala-lime transition-all duration-500 ease-out"

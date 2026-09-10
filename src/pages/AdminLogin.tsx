@@ -26,7 +26,7 @@ export function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-yala-cream px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-8">
           <div className="flex items-center justify-center mb-6">
@@ -55,7 +55,7 @@ export function AdminLogin() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 bg-yala-cream border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all"
+                  className="w-full px-4 py-3 pr-12 bg-white border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all"
                   placeholder="Enter password"
                   required
                   disabled={loading}

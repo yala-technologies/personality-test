@@ -80,7 +80,7 @@ export function CreateCandidateModal({ onClose, onCreate }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border-2 border-yala-green/20 text-yala-green rounded-xl hover:bg-yala-cream focus:outline-none focus:ring-2 focus:ring-yala-lime transition-colors font-medium"
+              className="flex-1 px-4 py-2 border-2 border-yala-green/20 text-yala-green rounded-xl hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-yala-lime transition-colors font-medium"
               disabled={loading}
             >
               Cancel

@@ -2,7 +2,7 @@ import { Check } from 'lucide-react';
 
 export function Complete() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-yala-cream px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-12 max-w-md text-center animate-fade-in">
         <div className="relative inline-flex items-center justify-center mb-6">
           <div className="w-24 h-24 bg-yala-lime rounded-3xl flex items-center justify-center transform rotate-3 animate-pulse">
