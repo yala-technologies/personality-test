@@ -227,16 +227,16 @@ export function InteractiveAssessment() {
 
   return (
     <div className="min-h-screen bg-yala-cream">
-      <div className="fixed top-0 left-0 right-0 h-1.5 bg-yala-green/10 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-yala-green/10 z-50">
         <div
           className="h-full bg-yala-lime transition-all duration-500 ease-out"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
 
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-20">
-        <div className="w-full max-w-3xl">
-          <div className="text-center mb-8 animate-fade-in">
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-6 md:py-8">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-4 md:mb-6 animate-fade-in">
             <div className="inline-flex items-center gap-2 text-sm font-medium text-yala-green/60">
               <span>{totalAnswered + 1} of 72</span>
               {saving && (
@@ -249,21 +249,21 @@ export function InteractiveAssessment() {
           </div>
 
           {currentQuestionIndex === 0 && totalAnswered === 0 && (
-            <div className="text-center mb-12 animate-slide-up">
-              <div className="flex items-center justify-center mb-6">
+            <div className="text-center mb-6 md:mb-8 animate-slide-up">
+              <div className="flex items-center justify-center mb-3">
                 <img 
                   src="/assets/yala-logo.svg" 
                   alt="Yala" 
-                  className="h-12 w-auto"
+                  className="h-8 md:h-10 w-auto"
                 />
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-yala-green mb-4">
+              <h1 className="text-3xl md:text-4xl font-bold text-yala-green mb-2">
                 Hi {firstName} 👋
               </h1>
-              <p className="text-lg text-yala-green/80 mb-2">
+              <p className="text-base text-yala-green/80 mb-1">
                 Welcome to the BDR Personality Assessment
               </p>
-              <p className="text-sm text-yala-green/60 max-w-2xl mx-auto">
+              <p className="text-sm text-yala-green/60 max-w-xl mx-auto">
                 Answer based on what is generally true of you rather than what you think an employer would prefer. 
                 There are no right or wrong answers. This will take about 10–15 minutes.
               </p>
@@ -271,16 +271,16 @@ export function InteractiveAssessment() {
           )}
 
           <div
-            className={`bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-8 md:p-12 mb-8 transition-all duration-300 ${
+            className={`bg-white rounded-2xl shadow-xl border-2 border-yala-green/5 p-6 md:p-8 mb-4 md:mb-6 transition-all duration-300 ${
               showTransition ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
             }`}
           >
-            <p className="text-2xl md:text-3xl font-semibold text-yala-black leading-relaxed">
+            <p className="text-xl md:text-2xl font-semibold text-yala-black leading-relaxed">
               {currentQuestion.text}
             </p>
           </div>
 
-          <div className="space-y-3 mb-12">
+          <div className="space-y-2 md:space-y-3 mb-6">
             {[1, 2, 3, 4, 5].map((value) => {
               const labels = [
                 'Strongly disagree',
@@ -296,15 +296,15 @@ export function InteractiveAssessment() {
                   key={value}
                   onClick={() => handleAnswer(value)}
                   disabled={submitting}
-                  className={`w-full group relative overflow-hidden rounded-2xl border-2 transition-all duration-200 ${
+                  className={`w-full group relative overflow-hidden rounded-xl border-2 transition-all duration-200 ${
                     isSelected
                       ? 'bg-yala-lime border-yala-green shadow-lg scale-[1.02]'
                       : 'bg-white border-yala-green/10 hover:border-yala-lime hover:shadow-md hover:scale-[1.01]'
                   }`}
                 >
-                  <div className="flex items-center gap-4 p-5 md:p-6">
+                  <div className="flex items-center gap-3 md:gap-4 p-3 md:p-4">
                     <div
-                      className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold transition-all ${
+                      className={`flex-shrink-0 w-10 h-10 md:w-11 md:h-11 rounded-lg flex items-center justify-center text-lg md:text-xl font-bold transition-all ${
                         isSelected
                           ? 'bg-yala-green text-yala-lime'
                           : 'bg-yala-cream text-yala-green group-hover:bg-yala-lime-soft'
@@ -313,7 +313,7 @@ export function InteractiveAssessment() {
                       {value}
                     </div>
                     <span
-                      className={`text-left text-base md:text-lg font-medium transition-colors ${
+                      className={`text-left text-sm md:text-base font-medium transition-colors ${
                         isSelected ? 'text-yala-green' : 'text-yala-black group-hover:text-yala-green'
                       }`}
                     >
@@ -321,7 +321,7 @@ export function InteractiveAssessment() {
                     </span>
                     {isSelected && (
                       <div className="ml-auto">
-                        <Check className="w-6 h-6 text-yala-green" />
+                        <Check className="w-5 h-5 text-yala-green" />
                       </div>
                     )}
                   </div>
