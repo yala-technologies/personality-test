@@ -38,7 +38,7 @@ export function AdminLogin() {
           </div>
           
           <h1 className="text-3xl font-bold text-center text-yala-green mb-2">
-            Yala Hiring - Big 5
+            Yala Big 5
           </h1>
           <p className="text-center text-yala-green/70 mb-8 font-medium">
             Personality Assessment Portal
