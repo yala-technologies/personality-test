@@ -118,7 +118,11 @@ export function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-yala-green"></div>
+            <img 
+              src="/assets/yala-star.svg" 
+              alt="Loading" 
+              className="inline-block h-16 w-16 animate-spin mx-auto"
+            />
             <p className="mt-4 text-yala-green font-medium">Loading candidates...</p>
           </div>
         ) : error ? (

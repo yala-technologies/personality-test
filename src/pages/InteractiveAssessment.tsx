@@ -197,7 +197,11 @@ export function InteractiveAssessment() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-yala-cream">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-yala-green"></div>
+          <img 
+            src="/assets/yala-star.svg" 
+            alt="Loading" 
+            className="inline-block h-16 w-16 animate-spin"
+          />
           <p className="mt-4 text-yala-green font-medium">Loading assessment...</p>
         </div>
       </div>
