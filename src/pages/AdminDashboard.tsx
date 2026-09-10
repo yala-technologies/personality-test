@@ -89,17 +89,17 @@ export function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="min-h-screen bg-yala-cream">
+      <header className="bg-white border-b-2 border-yala-green/5 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Yala Hiring</h1>
-              <p className="text-sm text-gray-600">BDR Personality Assessment</p>
+              <h1 className="text-3xl font-bold text-yala-green">Yala Hiring</h1>
+              <p className="text-sm text-yala-green/70 font-medium mt-1">BDR Personality Assessment</p>
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 text-sm text-yala-green hover:text-yala-white hover:bg-yala-green rounded-xl transition-all font-medium"
             >
               <LogOut className="w-4 h-4" />
               Logout
@@ -111,19 +111,19 @@ export function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            <p className="mt-2 text-gray-600">Loading candidates...</p>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-yala-green"></div>
+            <p className="mt-4 text-yala-green font-medium">Loading candidates...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700">
             {error}
           </div>
         ) : (
           <>
             <OverviewCards candidates={candidates} />
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
-              <div className="p-4 border-b border-gray-200">
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-yala-green/5 mt-6">
+              <div className="p-6 border-b-2 border-yala-green/5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex-1 max-w-md">
                     <div className="relative">
@@ -133,7 +133,7 @@ export function AdminDashboard() {
                         placeholder="Search by name or email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 bg-yala-cream border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all"
                       />
                     </div>
                   </div>
@@ -142,7 +142,7 @@ export function AdminDashboard() {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="px-4 py-3 bg-yala-cream border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all font-medium text-yala-green"
                     >
                       <option value="all">All statuses</option>
                       <option value="invited">Invited</option>
@@ -152,7 +152,7 @@ export function AdminDashboard() {
 
                     <button
                       onClick={() => setShowCreateModal(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
+                      className="flex items-center gap-2 px-5 py-3 bg-yala-green text-yala-lime rounded-xl font-semibold hover:bg-yala-green/90 focus:outline-none focus:ring-2 focus:ring-yala-lime focus:ring-offset-2 transition-all transform hover:scale-105"
                     >
                       <Plus className="w-4 h-4" />
                       Create candidate

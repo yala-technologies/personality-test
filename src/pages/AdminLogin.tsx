@@ -27,25 +27,25 @@ export function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-yala-cream px-4">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-8">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-              <Lock className="w-6 h-6 text-primary-600" />
+            <div className="w-16 h-16 bg-yala-lime rounded-2xl flex items-center justify-center">
+              <Lock className="w-8 h-8 text-yala-green" />
             </div>
           </div>
           
-          <h1 className="text-2xl font-semibold text-center text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-center text-yala-green mb-2">
             Yala Hiring
           </h1>
-          <p className="text-center text-gray-600 mb-6">
+          <p className="text-center text-yala-green/70 mb-8 font-medium">
             BDR Personality Assessment
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-semibold text-yala-green mb-2">
                 Admin Password
               </label>
               <input
@@ -53,7 +53,7 @@ export function AdminLogin() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-yala-cream border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all"
                 placeholder="Enter password"
                 required
                 disabled={loading}
@@ -61,7 +61,7 @@ export function AdminLogin() {
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">
+              <div className="text-sm text-red-600 bg-red-50 border-2 border-red-200 rounded-xl p-4">
                 {error}
               </div>
             )}
@@ -69,7 +69,7 @@ export function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-yala-green text-yala-lime py-3.5 px-4 rounded-xl font-semibold hover:bg-yala-green/90 focus:outline-none focus:ring-2 focus:ring-yala-lime focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
             >
               {loading ? 'Logging in...' : 'Log In'}
             </button>

@@ -18,9 +18,9 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
 
   function getStatusBadge(status: string) {
     const styles = {
-      invited: 'bg-gray-100 text-gray-700',
-      in_progress: 'bg-yellow-100 text-yellow-700',
-      completed: 'bg-green-100 text-green-700',
+      invited: 'bg-yala-sand text-yala-green',
+      in_progress: 'bg-yala-mint text-yala-green',
+      completed: 'bg-yala-lime text-yala-green',
     };
 
     const labels = {
@@ -31,8 +31,8 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
 
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-700'
+        className={`inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold ${
+          styles[status as keyof typeof styles] || 'bg-yala-sand text-yala-green'
         }`}
       >
         {labels[status as keyof typeof labels] || status}
@@ -43,9 +43,9 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
-        <thead className="bg-gray-50 border-b border-gray-200">
+        <thead className="bg-yala-cream border-b-2 border-yala-green/5">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-bold text-yala-green uppercase tracking-wider">
               Candidate
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden md:table-cell">
@@ -66,22 +66,22 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-yala-green/5">
           {candidates.map((candidate) => (
             <tr
               key={candidate.id}
               onClick={() => onSelectCandidate(candidate)}
-              className="hover:bg-gray-50 cursor-pointer transition-colors"
+              className="hover:bg-yala-cream/50 cursor-pointer transition-all"
             >
               <td className="px-4 py-4 whitespace-nowrap">
                 <div className="flex items-center gap-2">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-semibold text-yala-green">
                       {candidate.name}
                     </div>
                     {candidate.is_benchmark && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-700 mt-1">
-                        Benchmark
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-yala-lime text-yala-green mt-1">
+                        ⭐ Benchmark
                       </span>
                     )}
                   </div>

@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AdminDashboard } from './pages/AdminDashboard';
-import { Assessment } from './pages/Assessment';
+import { InteractiveAssessment } from './pages/InteractiveAssessment';
 import { Complete } from './pages/Complete';
 import { AdminRoute } from './components/AdminRoute';
 
@@ -12,7 +12,7 @@ function App() {
         <Route path="/admin" element={<AdminRoute />}>
           <Route index element={<AdminDashboard />} />
         </Route>
-        <Route path="/assessment/:token" element={<Assessment />} />
+        <Route path="/assessment/:token" element={<InteractiveAssessment />} />
         <Route path="/assessment/:token/complete" element={<Complete />} />
       </Routes>
     </BrowserRouter>
