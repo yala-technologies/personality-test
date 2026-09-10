@@ -4,6 +4,7 @@ import { ChevronLeft, Check } from 'lucide-react';
 import { candidateGet, candidateSave } from '../lib/api';
 import { QUESTIONS } from '../lib/questions';
 import type { CandidateAssessment } from '../lib/types';
+import { capitalizeName } from '../lib/utils';
 
 /**
  * Queue-based autosave to prevent race conditions
@@ -227,7 +228,7 @@ export function InteractiveAssessment() {
   const selectedValue = responses[currentQuestionId];
   const totalAnswered = Object.keys(responses).length;
   const progressPercent = (totalAnswered / 72) * 100;
-  const firstName = candidate.name.split(' ')[0];
+  const firstName = capitalizeName(candidate.name.split(' ')[0]);
 
   return (
     <div className="min-h-screen bg-white">
