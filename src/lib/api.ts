@@ -1,4 +1,4 @@
-import type { AdminCandidate, CandidateAssessment, AdminSession, TraitScores, QualitySignals } from './types';
+import type { AdminCandidate, CandidateAssessment, AdminSession, TraitScores } from './types';
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/personality-api`;
 
@@ -175,14 +175,15 @@ export async function candidateSave(
 }
 
 /**
- * Candidate get results (scores)
+ * Candidate get results (scores only)
  * Backend expects: { action: 'candidate.results', token: string }
- * Backend returns: { scores: TraitScores, quality_signals?: QualitySignals, similarity_score?: number }
+ * Backend returns: { scores: TraitScores }
+ * 
+ * Response deliberately limited to candidate's own nine trait scores.
+ * Does NOT include: quality_signals, similarity_score, benchmark data, or other candidates.
  */
 export async function candidateResults(accessToken: string): Promise<{
   scores: TraitScores | null;
-  quality_signals?: QualitySignals;
-  similarity_score?: number | null;
 }> {
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
