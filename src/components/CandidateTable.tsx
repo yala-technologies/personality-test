@@ -41,42 +41,42 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead className="bg-yala-cream border-b-2 border-yala-green/5">
+    <div className="overflow-x-auto rounded-[20px] border border-[#d4d4d4]">
+      <table className="w-full border-collapse">
+        <thead className="bg-[#f2f4f5]">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-bold text-yala-green uppercase tracking-wider">
+            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider">
               Candidate
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden md:table-cell">
+            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden md:table-cell">
               Email
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider">
               Status
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden lg:table-cell">
+            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden lg:table-cell">
               Created
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden lg:table-cell">
+            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden lg:table-cell">
               Completed
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden xl:table-cell">
+            <th className="h-11 px-6 py-3 text-left font-medium text-[12px] leading-[18px] text-[#525252] uppercase tracking-wider hidden xl:table-cell">
               Similarity
             </th>
-            <th className="px-4 py-3"></th>
+            <th className="h-11 px-6 py-3"></th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-yala-green/5">
+        <tbody className="bg-white">
           {candidates.map((candidate) => (
             <tr
               key={candidate.id}
               onClick={() => onSelectCandidate(candidate)}
-              className="hover:bg-yala-cream/50 cursor-pointer transition-all"
+              className="border-b border-[#eaecf0] bg-white hover:bg-yala-hover cursor-pointer transition-colors"
             >
-              <td className="px-4 py-4 whitespace-nowrap">
+              <td className="px-6 py-5 whitespace-nowrap">
                 <div className="flex items-center gap-2">
                   <div>
-                    <div className="text-sm font-semibold text-yala-green">
+                    <div className="text-[14px] font-semibold text-neutral-900">
                       {candidate.name}
                     </div>
                     {candidate.is_benchmark && (
@@ -87,19 +87,19 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
                   </div>
                 </div>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell">
+              <td className="px-6 py-5 whitespace-nowrap text-[14px] text-neutral-900 hidden md:table-cell">
                 {candidate.email || '—'}
               </td>
-              <td className="px-4 py-4 whitespace-nowrap">
+              <td className="px-6 py-5 whitespace-nowrap">
                 {getStatusBadge(candidate.status)}
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell">
+              <td className="px-6 py-5 whitespace-nowrap text-[14px] text-neutral-900 hidden lg:table-cell">
                 {formatDate(candidate.created_at)}
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell">
+              <td className="px-6 py-5 whitespace-nowrap text-[14px] text-neutral-900 hidden lg:table-cell">
                 {formatDate(candidate.completed_at)}
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 hidden xl:table-cell">
+              <td className="px-6 py-5 whitespace-nowrap text-[14px] text-neutral-900 hidden xl:table-cell">
                 {candidate.is_benchmark ? (
                   <span className="text-gray-400">—</span>
                 ) : candidate.similarity_score !== null ? (
@@ -108,7 +108,7 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
                   '—'
                 )}
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
+              <td className="px-6 py-5 whitespace-nowrap text-right text-sm">
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </td>
             </tr>
