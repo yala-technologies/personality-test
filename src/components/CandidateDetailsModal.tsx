@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X, Copy, Check, Star, AlertCircle } from 'lucide-react';
+import { X, Copy, Check, Star, AlertCircle, Download } from 'lucide-react';
 import type { Candidate } from '../lib/types';
-import { formatDate, formatDateTime, formatDuration, copyToClipboard, capitalizeName } from '../lib/utils';
+import { formatDate, formatDateTime, formatDuration, copyToClipboard, capitalizeName, TRAIT_LABELS } from '../lib/utils';
 import { adminSetBenchmark } from '../lib/api';
 import { getSession } from '../lib/auth';
 import { TraitVisualization } from './TraitVisualization';
@@ -15,6 +15,86 @@ interface Props {
 export function CandidateDetailsModal({ candidate, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const [settingBenchmark, setSettingBenchmark] = useState(false);
+
+  function generateMarkdown(): string {
+    const md: string[] = [];
+    
+    md.push(`# ${capitalizeName(candidate.name)}`);
+    md.push('');
+    md.push('## Candidate Information');
+    md.push('');
+    md.push(`- **Email:** ${candidate.email || 'Not provided'}`);
+    md.push(`- **Status:** ${candidate.status}`);
+    md.push(`- **Created:** ${formatDate(candidate.created_at)}`);
+    md.push(`- **Started:** ${formatDate(candidate.started_at)}`);
+    md.push(`- **Completed:** ${formatDate(candidate.completed_at)}`);
+    if (candidate.assessment_duration_seconds) {
+      md.push(`- **Duration:** ${formatDuration(candidate.assessment_duration_seconds)}`);
+    }
+    md.push(`- **Assessment Version:** ${candidate.assessment_version || 'V1'}`);
+    md.push('');
+
+    if (candidate.is_benchmark) {
+      md.push('> **⭐ This candidate is the active benchmark**');
+      md.push('');
+    }
+
+    if (candidate.scores) {
+      md.push('## Trait Scores');
+      md.push('');
+      Object.entries(candidate.scores).forEach(([trait, score]) => {
+        const label = TRAIT_LABELS[trait as keyof typeof TRAIT_LABELS];
+        md.push(`- **${label}:** ${score.toFixed(1)}`);
+      });
+      md.push('');
+    }
+
+    if (candidate.similarity_score !== null && !candidate.is_benchmark) {
+      md.push('## Benchmark Comparison');
+      md.push('');
+      md.push(`**Overall Similarity:** ${candidate.similarity_score.toFixed(1)}%`);
+      md.push('');
+    }
+
+    if (candidate.quality_signals) {
+      md.push('## Response Quality');
+      md.push('');
+      md.push(`- **Status:** ${candidate.quality_signals.status}`);
+      md.push(`- **Straight-line Rate:** ${(candidate.quality_signals.straightLineRate * 100).toFixed(1)}%`);
+      md.push(`- **Consistency Score:** ${candidate.quality_signals.consistencyScore.toFixed(2)}`);
+      if (candidate.quality_signals.durationSeconds) {
+        md.push(`- **Duration:** ${formatDuration(candidate.quality_signals.durationSeconds)}`);
+      }
+      if (candidate.quality_signals.flags.length > 0) {
+        md.push('');
+        md.push('**Flags:**');
+        candidate.quality_signals.flags.forEach(flag => {
+          md.push(`- ${flag}`);
+        });
+      }
+      md.push('');
+    }
+
+    md.push('---');
+    md.push('');
+    md.push(`*Generated: ${new Date().toLocaleString()}*`);
+    md.push(`*Source: Yala Big 5 Personality Assessment Portal*`);
+
+    return md.join('\n');
+  }
+
+  function downloadMarkdown() {
+    const markdown = generateMarkdown();
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${candidate.name.replace(/\s+/g, '_')}_assessment.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   const assessmentUrl = `${window.location.origin}/assessment/${candidate.access_token}`;
 
@@ -89,12 +169,22 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={downloadMarkdown}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-yala-green hover:bg-yala-lime-soft rounded-xl transition-all font-medium"
+              title="Download as Markdown"
+            >
+              <Download className="w-4 h-4" />
+              Download
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
