@@ -39,7 +39,9 @@ export function Complete() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-8 md:p-12 max-w-md md:max-w-4xl w-full text-center animate-fade-in">
+      <div className={`bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-8 md:p-12 w-full text-center animate-fade-in transition-all duration-500 ${
+        showScores ? 'max-w-md md:max-w-4xl' : 'max-w-md'
+      }`}>
         <div className="relative inline-flex items-center justify-center mb-6">
           <div className="w-24 h-24 bg-yala-lime rounded-3xl flex items-center justify-center transform rotate-3 animate-pulse">
             <Check className="w-12 h-12 text-yala-green" strokeWidth={3} />
@@ -60,11 +62,11 @@ export function Complete() {
           successfully.
         </p>
         
-        <div className="bg-yala-lime-soft rounded-2xl p-4 mb-6">
+        <div className="mb-6 flex justify-center">
           <button
             onClick={() => setShowScores(!showScores)}
             disabled={loading}
-            className="text-yala-green font-medium hover:text-yala-green/80 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-yala-lime-soft text-yala-green font-medium rounded-2xl hover:bg-yala-lime transition-colors disabled:opacity-50"
           >
             {loading ? 'Loading...' : showScores ? 'Hide your scores' : 'See your scores'}
             {!loading && (showScores ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
