@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Copy, Check, Star, AlertCircle } from 'lucide-react';
 import type { Candidate } from '../lib/types';
-import { formatDate, formatDateTime, formatDuration, copyToClipboard } from '../lib/utils';
+import { formatDate, formatDateTime, formatDuration, copyToClipboard, capitalizeName } from '../lib/utils';
 import { adminSetBenchmark } from '../lib/api';
 import { getSession } from '../lib/auth';
 import { TraitVisualization } from './TraitVisualization';
@@ -33,7 +33,7 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
     if (!session) return;
 
     const confirmed = window.confirm(
-      `Set ${candidate.name} as the benchmark? This will recalculate similarities for all completed candidates.`
+      `Set ${capitalizeName(candidate.name)} as the benchmark? This will recalculate similarities for all completed candidates.`
     );
 
     if (!confirmed) return;
@@ -79,7 +79,7 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full my-8">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">{candidate.name}</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{capitalizeName(candidate.name)}</h2>
             <div className="flex items-center gap-2 mt-1">
               {getStatusBadge(candidate.status)}
               {candidate.is_benchmark && (

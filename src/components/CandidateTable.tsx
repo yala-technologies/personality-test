@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import type { Candidate } from '../lib/types';
-import { formatDate } from '../lib/utils';
+import { formatDate, capitalizeName } from '../lib/utils';
 
 interface Props {
   candidates: Candidate[];
@@ -77,7 +77,7 @@ export function CandidateTable({ candidates, onSelectCandidate }: Props) {
                 <div className="flex items-center gap-2">
                   <div>
                     <div className="text-[14px] font-semibold text-neutral-900">
-                      {candidate.name}
+                      {capitalizeName(candidate.name)}
                     </div>
                     {candidate.is_benchmark && (
                       <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-yala-lime text-yala-green mt-1">

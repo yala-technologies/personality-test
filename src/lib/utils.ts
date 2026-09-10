@@ -54,3 +54,16 @@ export const TRAIT_LABELS: Record<keyof TraitScores, string> = {
 export function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text);
 }
+
+/**
+ * Capitalizes the first letter of each word in a name
+ * @example capitalizeName("john doe") => "John Doe"
+ * @example capitalizeName("JANE SMITH") => "Jane Smith"
+ */
+export function capitalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
