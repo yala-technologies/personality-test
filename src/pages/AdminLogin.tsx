@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { adminLogin } from '../lib/api';
 import { saveSession } from '../lib/auth';
 
 export function AdminLogin() {
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -31,9 +32,11 @@ export function AdminLogin() {
       <div className="w-full max-w-md animate-fade-in">
         <div className="bg-white rounded-3xl shadow-2xl border-2 border-yala-green/5 p-8">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-yala-lime rounded-2xl flex items-center justify-center">
-              <Lock className="w-8 h-8 text-yala-green" />
-            </div>
+            <img 
+              src="/assets/yala-logo.svg" 
+              alt="Yala" 
+              className="h-12 w-auto"
+            />
           </div>
           
           <h1 className="text-3xl font-bold text-center text-yala-green mb-2">
@@ -48,16 +51,30 @@ export function AdminLogin() {
               <label htmlFor="password" className="block text-sm font-semibold text-yala-green mb-2">
                 Admin Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-yala-cream border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all"
-                placeholder="Enter password"
-                required
-                disabled={loading}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 pr-12 bg-yala-cream border-2 border-yala-green/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-yala-lime focus:border-yala-green transition-all"
+                  placeholder="Enter password"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-yala-green/50 hover:text-yala-green transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {error && (

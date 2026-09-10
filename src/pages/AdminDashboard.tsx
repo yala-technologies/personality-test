@@ -93,9 +93,16 @@ export function AdminDashboard() {
       <header className="bg-white border-b-2 border-yala-green/5 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-yala-green">Yala Hiring</h1>
-              <p className="text-sm text-yala-green/70 font-medium mt-1">BDR Personality Assessment</p>
+            <div className="flex items-center gap-4">
+              <img 
+                src="/assets/yala-logo.svg" 
+                alt="Yala" 
+                className="h-10 w-auto"
+              />
+              <div className="border-l-2 border-yala-green/10 pl-4">
+                <h1 className="text-3xl font-bold text-yala-green">Hiring</h1>
+                <p className="text-sm text-yala-green/70 font-medium mt-1">BDR Personality Assessment</p>
+              </div>
             </div>
             <button
               onClick={handleLogout}

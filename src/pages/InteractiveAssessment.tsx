@@ -196,6 +196,13 @@ export function InteractiveAssessment() {
 
           {currentQuestionIndex === 0 && totalAnswered === 0 && (
             <div className="text-center mb-12 animate-slide-up">
+              <div className="flex items-center justify-center mb-6">
+                <img 
+                  src="/assets/yala-logo.svg" 
+                  alt="Yala" 
+                  className="h-12 w-auto"
+                />
+              </div>
               <h1 className="text-4xl md:text-5xl font-bold text-yala-green mb-4">
                 Hi {firstName} 👋
               </h1>

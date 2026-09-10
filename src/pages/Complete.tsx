@@ -1,4 +1,4 @@
-import { Check, Sparkles } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 export function Complete() {
   return (
@@ -8,7 +8,11 @@ export function Complete() {
           <div className="w-24 h-24 bg-yala-lime rounded-3xl flex items-center justify-center transform rotate-3 animate-pulse">
             <Check className="w-12 h-12 text-yala-green" strokeWidth={3} />
           </div>
-          <Sparkles className="absolute -top-2 -right-2 w-8 h-8 text-yala-green animate-bounce" />
+          <img 
+            src="/assets/yala-star.svg" 
+            alt="" 
+            className="absolute -top-2 -right-2 w-8 h-8 animate-bounce"
+          />
         </div>
         
         <h1 className="text-3xl font-bold text-yala-green mb-4">
@@ -26,9 +30,14 @@ export function Complete() {
           </p>
         </div>
 
-        <p className="text-xs text-yala-green/50">
-          We'll be in touch soon!
-        </p>
+        <div className="flex items-center justify-center gap-2 text-xs text-yala-green/50">
+          <img 
+            src="/assets/yala-logo.svg" 
+            alt="Yala" 
+            className="h-4 w-auto opacity-50"
+          />
+          <span>We'll be in touch soon!</span>
+        </div>
       </div>
     </div>
   );
