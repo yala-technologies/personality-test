@@ -66,6 +66,25 @@ export interface AdminCandidate {
 export type Candidate = AdminCandidate;
 
 /**
+ * Invitation status returned when creating or resending candidate invites
+ */
+export interface InvitationStatus {
+  attempted: boolean;
+  sent: boolean;
+  email?: string;
+  error?: string;
+}
+
+/**
+ * Result returned when creating a new candidate
+ * Includes candidate data and invitation email status
+ */
+export interface CreateCandidateResult {
+  candidate: AdminCandidate;
+  invitation: InvitationStatus;
+}
+
+/**
  * Admin session returned from login
  */
 export interface AdminSession {

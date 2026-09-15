@@ -10,6 +10,10 @@ const ADMIN_PASSWORD_HASH = '11d16afc298bebd8153b31234beda426bca99b74a759978979b
 // HMAC secret for signing admin sessions
 const ADMIN_SECRET = Deno.env.get('ADMIN_SECRET') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Email configuration
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+const PERSONALITY_APP_URL = Deno.env.get('PERSONALITY_APP_URL');
+
 interface TraitScores {
   industriousness: number;
   assertiveness: number;
@@ -308,6 +312,286 @@ async function createAdminSession(): Promise<{ session: string; expiresAt: strin
 }
 
 /**
+ * Generate email HTML using Yala template
+ */
+function generateInviteEmailHtml(firstName: string, assessmentUrl: string): string {
+  const content = `
+<h1>Complete your personality assessment</h1>
+<p>Hi ${firstName},</p>
+<p>Thank you for your interest in joining Yala.</p>
+<p>As the next step in the process, we'd like you to complete a short personality assessment. It helps us understand how you typically approach work, challenges, decisions and interactions with others.</p>
+<p>There are no right or wrong answers, so please answer based on what is generally true of you rather than what you think we may want to hear.</p>
+<p>The assessment contains 72 short statements and usually takes around 10–15 minutes.</p>
+<a href="${assessmentUrl}" class="button">Start assessment</a>
+<p>You can leave and return to the assessment using the same link if needed:</p>
+<p style="word-break: break-all; color: #8FA1BC; font-size: 13px;">${assessmentUrl}</p>
+<p><strong>Please keep this link private, as it is unique to you.</strong></p>
+<p>Best,<br>Yala Careers</p>
+`;
+
+  const shell = `<!DOCTYPE html>
+<html lang="en-US" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yala Email</title>
+    <style type="text/css">
+        @font-face {
+            font-family: 'CreatoDisplay';
+            src: url('https://assets.useyala.xyz/email/CreatoDisplay-Regular.otf') format('opentype');
+            font-weight: normal;
+        }
+        @font-face {
+            font-family: 'CreatoDisplay';
+            src: url('https://assets.useyala.xyz/email/CreatoDisplay-Medium.otf') format('opentype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'CreatoDisplay';
+            src: url('https://assets.useyala.xyz/email/CreatoDisplay-Bold.otf') format('opentype');
+            font-weight: bold;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #F2F2F7;
+            -webkit-font-smoothing: antialiased;
+            font-family: 'CreatoDisplay', Helvetica, Arial, sans-serif;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .content-area {
+            padding: 10px 41px 20px 41px;
+        }
+        h1 {
+            color: #233858;
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1.4;
+            letter-spacing: -0.056em;
+            margin: 0 0 16px 0;
+        }
+        p {
+            color: #6C82A3;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+        }
+        a {
+            color: #00845A;
+            text-decoration: none;
+        }
+        .button {
+            display: inline-block;
+            background-color: #00845A;
+            color: #ffffff !important;
+            height: 48px;
+            line-height: 48px;
+            padding: 0 32px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            padding: 30px 41px 40px 41px;
+            background-color: #ffffff;
+        }
+        .footer-text {
+            font-size: 11px;
+            line-height: 18px;
+            color: #8FA1BC;
+            text-align: left;
+        }
+        .social-icons a {
+            margin-right: 12px;
+            display: inline-block;
+        }
+        hr {
+            border: 0; 
+            border-top: 1px solid #eeeeee; 
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <td style="padding: 24px 25px 24px 25px;">
+                    <a href="https://useyala.com">
+                        <img src="https://assets.useyala.xyz/email/yala-cw-logo.png" width="130" height="auto" alt="Yala" style="display: block; border: 0;">
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 0 25px;"><hr></td>
+            </tr>
+        </table>
+        <div class="content-area">
+            <div style="padding-bottom: 24px;">
+                <img src="https://assets.useyala.xyz/email/yala-star.png" width="28" height="28" alt="" style="display: block; border: 0;">
+            </div>
+            ${content}
+        </div>
+        <div class="footer">
+            <div style="border-top: 1px solid #eeeeee; padding-top: 20px; margin-bottom: 20px;"></div>
+            <div class="footer-text">
+                Yala is a trade technology platform for manufacturers and distributors. Yala is not a bank. Regulated financial services available through Yala are provided by appropriately registered, licensed or authorised Yala entities and/or third-party financial institutions, depending on the service and jurisdiction.
+                <br><br>
+                For information about how we collect and process personal data, please refer to our <a href="https://useyala.com/privacy">Privacy Policy</a>. To learn more about our services, please visit our <a href="https://useyala.com">website</a>.
+                <br><br>
+                <div class="social-icons" style="margin-bottom: 16px;">
+                    <a href="https://x.com/useyala"><img src="https://assets.useyala.xyz/email/brand-x.png" alt="X" width="20"></a>
+                    <a href="https://www.instagram.com/useyala_/"><img src="https://assets.useyala.xyz/email/brand-instagram.png" alt="Instagram" width="20"></a>
+                    <a href="https://www.linkedin.com/company/useyala/"><img src="https://assets.useyala.xyz/email/brand-linkedin.png" alt="LinkedIn" width="20"></a>
+                </div>
+                <strong>Yala Technologies</strong><br>
+                Wilmington • London • Vancouver • Lagos<br>
+                © 2026 Yala Technologies. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+  return shell;
+}
+
+/**
+ * Send invitation email via Resend
+ */
+async function sendInvitationEmail(
+  candidateName: string,
+  candidateEmail: string,
+  accessToken: string,
+  supabase: any,
+  candidateId: string
+): Promise<{ attempted: boolean; sent: boolean; email?: string; error?: string }> {
+  // Check prerequisites
+  if (!RESEND_API_KEY) {
+    await supabase
+      .from('personality_candidates')
+      .update({
+        invite_email_status: 'failed',
+        invite_email_error: 'RESEND_API_KEY not configured',
+      })
+      .eq('id', candidateId);
+    
+    return {
+      attempted: true,
+      sent: false,
+      email: candidateEmail,
+      error: 'Email service not configured',
+    };
+  }
+
+  if (!PERSONALITY_APP_URL) {
+    await supabase
+      .from('personality_candidates')
+      .update({
+        invite_email_status: 'failed',
+        invite_email_error: 'PERSONALITY_APP_URL not configured',
+      })
+      .eq('id', candidateId);
+    
+    return {
+      attempted: true,
+      sent: false,
+      email: candidateEmail,
+      error: 'App URL not configured',
+    };
+  }
+
+  // Build assessment URL
+  const appUrl = PERSONALITY_APP_URL.replace(/\/+$/, ''); // Remove trailing slashes
+  const assessmentUrl = `${appUrl}/assessment/${accessToken}`;
+
+  // Extract first name
+  const firstName = candidateName.trim().split(/\s+/)[0] || 'there';
+
+  // Generate email HTML
+  const html = generateInviteEmailHtml(firstName, assessmentUrl);
+
+  // Send via Resend
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Yala Careers <careers@mail.useyala.com>',
+        to: [candidateEmail],
+        subject: 'Your Yala personality assessment',
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      const errorMsg = `Resend error: ${response.status}`;
+      
+      await supabase
+        .from('personality_candidates')
+        .update({
+          invite_email_status: 'failed',
+          invite_email_error: errorMsg.slice(0, 500),
+        })
+        .eq('id', candidateId);
+      
+      return {
+        attempted: true,
+        sent: false,
+        email: candidateEmail,
+        error: errorMsg,
+      };
+    }
+
+    // Success - update tracking
+    await supabase
+      .from('personality_candidates')
+      .update({
+        invite_sent_at: new Date().toISOString(),
+        invite_email_status: 'sent',
+        invite_email_error: null,
+      })
+      .eq('id', candidateId);
+
+    return {
+      attempted: true,
+      sent: true,
+      email: candidateEmail,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    
+    await supabase
+      .from('personality_candidates')
+      .update({
+        invite_email_status: 'failed',
+        invite_email_error: errorMsg.slice(0, 500),
+      })
+      .eq('id', candidateId);
+    
+    return {
+      attempted: true,
+      sent: false,
+      email: candidateEmail,
+      error: errorMsg,
+    };
+  }
+}
+
+/**
  * Verify HMAC-signed admin session token
  */
 async function verifyAdminSession(session: string): Promise<boolean> {
@@ -473,8 +757,28 @@ serve(async (req) => {
 
       if (error) throw error;
 
+      // Send invitation email if email is provided
+      let invitation;
+      if (email) {
+        invitation = await sendInvitationEmail(
+          data.name,
+          email,
+          data.access_token,
+          supabase,
+          data.id
+        );
+      } else {
+        invitation = {
+          attempted: false,
+          sent: false,
+        };
+      }
+
       return new Response(
-        JSON.stringify({ candidate: data }),
+        JSON.stringify({ 
+          candidate: data,
+          invitation,
+        }),
         { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
@@ -562,6 +866,72 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ ok: true }),
+        { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
+    // Admin resend invite
+    if (action === 'admin.resend_invite') {
+      const { id } = body;
+      
+      if (!id) {
+        return new Response(
+          JSON.stringify({ error: 'Candidate ID is required' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      // Fetch candidate
+      const { data: candidate, error: fetchError } = await supabase
+        .from('personality_candidates')
+        .select('id, name, email, access_token, status')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !candidate) {
+        return new Response(
+          JSON.stringify({ error: 'Candidate not found' }),
+          { 
+            status: 404,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      if (!candidate.email) {
+        return new Response(
+          JSON.stringify({ error: 'Candidate has no email address' }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      if (candidate.status === 'completed') {
+        return new Response(
+          JSON.stringify({ error: 'Assessment already completed', warning: true }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      // Resend invitation
+      const invitation = await sendInvitationEmail(
+        candidate.name,
+        candidate.email,
+        candidate.access_token,
+        supabase,
+        candidate.id
+      );
+
+      return new Response(
+        JSON.stringify({ invitation }),
         { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }

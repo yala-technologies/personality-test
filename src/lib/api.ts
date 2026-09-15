@@ -1,4 +1,4 @@
-import type { AdminCandidate, CandidateAssessment, AdminSession, TraitScores } from './types';
+import type { AdminCandidate, CandidateAssessment, AdminSession, TraitScores, CreateCandidateResult, InvitationStatus } from './types';
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/personality-api`;
 
@@ -60,13 +60,13 @@ export async function adminListCandidates(sessionToken: string): Promise<AdminCa
 /**
  * Admin create candidate
  * Backend expects: { action: 'admin.create', name: string, email?: string }
- * Backend returns: { candidate: AdminCandidate }
+ * Backend returns: { candidate: AdminCandidate, invitation: InvitationStatus }
  */
 export async function adminCreateCandidate(
   sessionToken: string,
   name: string,
   email?: string
-): Promise<AdminCandidate> {
+): Promise<CreateCandidateResult> {
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
     headers: { 
@@ -86,7 +86,40 @@ export async function adminCreateCandidate(
   }
 
   const result = await response.json();
-  return result.candidate;
+  return {
+    candidate: result.candidate,
+    invitation: result.invitation,
+  };
+}
+
+/**
+ * Admin resend invite
+ * Backend expects: { action: 'admin.resend_invite', id: string }
+ * Backend returns: { invitation: InvitationStatus }
+ */
+export async function adminResendInvite(
+  sessionToken: string,
+  candidateId: string
+): Promise<InvitationStatus> {
+  const response = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${sessionToken}`,
+    },
+    body: JSON.stringify({
+      action: 'admin.resend_invite',
+      id: candidateId,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to resend invitation' }));
+    throw new Error(error.error || 'Failed to resend invitation');
+  }
+
+  const result = await response.json();
+  return result.invitation;
 }
 
 /**

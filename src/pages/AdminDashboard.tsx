@@ -61,10 +61,22 @@ export function AdminDashboard() {
     }
 
     try {
-      const newCandidate = await adminCreateCandidate(session.token, name, email);
-      setCandidates([newCandidate, ...candidates]);
+      const result = await adminCreateCandidate(session.token, name, email);
+      setCandidates([result.candidate, ...candidates]);
       setShowCreateModal(false);
-      setSelectedCandidate(newCandidate);
+      
+      // Show invitation status feedback
+      if (result.invitation.attempted) {
+        if (result.invitation.sent) {
+          alert(`✅ Candidate created successfully!\n\nInvitation email sent to ${result.invitation.email}`);
+        } else {
+          alert(`⚠️ Candidate created, but invitation email failed to send.\n\nError: ${result.invitation.error}\n\nYou can copy the assessment link from the candidate details.`);
+        }
+      } else if (!email) {
+        alert(`✅ Candidate created successfully!\n\nNo email provided. Copy and send the assessment link manually from the candidate details.`);
+      }
+      
+      setSelectedCandidate(result.candidate);
     } catch (err) {
       throw err;
     }
