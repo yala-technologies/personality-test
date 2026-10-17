@@ -4,6 +4,7 @@ import {
   adminListCandidates,
   adminCreateCandidate,
   adminSetBenchmark,
+  adminSetHidden,
   candidateGet,
   candidateSave,
 } from './api';
@@ -165,6 +166,63 @@ describe('API Client', () => {
         name: 'Test Candidate',
         email: undefined,
       });
+    });
+  });
+
+  describe('adminSetHidden', () => {
+    it('should send hide request with candidate ID', async () => {
+      const candidate = { id: 'candidate-id-123', name: 'Test', hidden: true };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ candidate }),
+      });
+
+      const result = await adminSetHidden('test-session-token', 'candidate-id-123', true);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test.supabase.co/functions/v1/personality-api',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer test-session-token',
+          },
+          body: JSON.stringify({
+            action: 'admin.set_hidden',
+            id: 'candidate-id-123',
+            hidden: true,
+          }),
+        }
+      );
+      expect(result).toEqual(candidate);
+    });
+
+    it('should send restore request with hidden false', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ candidate: { id: 'candidate-id-123', hidden: false } }),
+      });
+
+      await adminSetHidden('test-session-token', 'candidate-id-123', false);
+
+      const callBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(callBody).toEqual({
+        action: 'admin.set_hidden',
+        id: 'candidate-id-123',
+        hidden: false,
+      });
+    });
+
+    it('should throw error when the result cannot be updated', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: 'Candidate not found' }),
+      });
+
+      await expect(
+        adminSetHidden('test-session-token', 'missing', true)
+      ).rejects.toThrow('Candidate not found');
     });
   });
 

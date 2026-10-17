@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LogOut, Search } from 'lucide-react';
-import { adminListCandidates, adminCreateCandidate } from '../lib/api';
+import { adminListCandidates, adminCreateCandidate, adminSetHidden } from '../lib/api';
 import { getSession, clearSession } from '../lib/auth';
 import type { Candidate } from '../lib/types';
 import { CandidateTable } from '../components/CandidateTable';
@@ -12,6 +12,7 @@ import { BulkDownloadButton } from '../components/BulkDownloadButton';
 
 type SortField = 'name' | 'email' | 'status' | 'created' | 'completed' | 'similarity';
 type SortDirection = 'asc' | 'desc';
+type ResultsView = 'visible' | 'hidden';
 
 export function AdminDashboard() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -23,6 +24,9 @@ export function AdminDashboard() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [resultsView, setResultsView] = useState<ResultsView>('visible');
+  const [pendingCandidateId, setPendingCandidateId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,7 +86,7 @@ export function AdminDashboard() {
     }
   }
 
-  const filteredCandidates = candidates.filter((candidate) => {
+  function matchesFilters(candidate: Candidate) {
     const matchesSearch =
       candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (candidate.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
@@ -90,7 +94,47 @@ export function AdminDashboard() {
     const matchesStatus = statusFilter === 'all' || candidate.status === statusFilter;
 
     return matchesSearch && matchesStatus;
-  });
+  }
+
+  const visibleCandidates = candidates.filter((candidate) => candidate.hidden !== true);
+  const hiddenCandidates = candidates.filter((candidate) => candidate.hidden === true);
+  const filteredCandidates = (resultsView === 'hidden' ? hiddenCandidates : visibleCandidates)
+    .filter(matchesFilters);
+
+  const filtersActive = searchQuery.trim() !== '' || statusFilter !== 'all';
+  const emptyMessage = resultsView === 'hidden'
+    ? (hiddenCandidates.length > 0 && filtersActive
+        ? 'No hidden results match your filters.'
+        : 'No hidden results.')
+    : candidates.length === 0
+      ? 'No candidates found. Create your first candidate to get started.'
+      : visibleCandidates.length > 0 && filtersActive
+        ? 'No visible results match your filters.'
+        : 'No visible results.';
+
+  async function handleSetHidden(candidate: Candidate, hidden: boolean) {
+    const session = getSession();
+    if (!session) {
+      navigate('/admin', { replace: true });
+      return;
+    }
+
+    try {
+      setPendingCandidateId(candidate.id);
+      setActionError('');
+      const updated = await adminSetHidden(session.token, candidate.id, hidden);
+      setCandidates((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item))
+      );
+      setSelectedCandidate((current) =>
+        current?.id === updated.id ? updated : current
+      );
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to update result visibility');
+    } finally {
+      setPendingCandidateId(null);
+    }
+  }
 
   function handleSort(field: SortField) {
     if (sortField === field) {
@@ -176,7 +220,7 @@ export function AdminDashboard() {
           </div>
         ) : (
           <>
-            <OverviewCards candidates={candidates} />
+            <OverviewCards candidates={visibleCandidates} />
 
             <div className="bg-white rounded-2xl shadow-lg border-2 border-yala-green/5 mt-6">
               <div className="p-6 border-b-2 border-yala-green/5">
@@ -219,13 +263,64 @@ export function AdminDashboard() {
                 </div>
               </div>
 
-              <CandidateTable
-                candidates={sortedCandidates}
-                onSelectCandidate={setSelectedCandidate}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
+              <div className="px-6 pt-4 flex items-center gap-2" role="tablist" aria-label="Result visibility">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={resultsView === 'visible'}
+                  onClick={() => setResultsView('visible')}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${
+                    resultsView === 'visible'
+                      ? 'bg-yala-lime text-yala-green border-yala-green/20'
+                      : 'bg-white text-neutral-600 border-neutral-200 hover:border-yala-green/20 hover:bg-yala-lime-soft'
+                  }`}
+                >
+                  Results
+                  <span className={`inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-lg text-xs ${
+                    resultsView === 'visible' ? 'bg-yala-green text-yala-lime' : 'bg-neutral-100 text-neutral-600'
+                  }`}>
+                    {visibleCandidates.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={resultsView === 'hidden'}
+                  onClick={() => setResultsView('hidden')}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${
+                    resultsView === 'hidden'
+                      ? 'bg-yala-lime text-yala-green border-yala-green/20'
+                      : 'bg-white text-neutral-600 border-neutral-200 hover:border-yala-green/20 hover:bg-yala-lime-soft'
+                  }`}
+                >
+                  Hidden
+                  <span className={`inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-lg text-xs ${
+                    resultsView === 'hidden' ? 'bg-yala-green text-yala-lime' : 'bg-neutral-100 text-neutral-600'
+                  }`}>
+                    {hiddenCandidates.length}
+                  </span>
+                </button>
+              </div>
+
+              {actionError && (
+                <div className="mx-6 mt-4 bg-red-50 border-2 border-red-200 rounded-xl p-3 text-sm text-red-700">
+                  {actionError}
+                </div>
+              )}
+
+              <div className="p-6">
+                <CandidateTable
+                  candidates={sortedCandidates}
+                  onSelectCandidate={setSelectedCandidate}
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  view={resultsView}
+                  pendingCandidateId={pendingCandidateId}
+                  onSetHidden={handleSetHidden}
+                  emptyMessage={emptyMessage}
+                />
+              </div>
             </div>
           </>
         )}

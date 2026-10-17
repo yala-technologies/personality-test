@@ -870,6 +870,56 @@ serve(async (req) => {
       );
     }
 
+    // Admin hide or restore a result in the dashboard
+    if (action === 'admin.set_hidden') {
+      const { id, hidden } = body;
+
+      if (!id || typeof hidden !== 'boolean') {
+        return new Response(
+          JSON.stringify({ error: 'Candidate ID and hidden flag are required' }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('personality_candidates')
+        .update({ hidden })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return new Response(
+            JSON.stringify({ error: 'Candidate not found' }),
+            {
+              status: 404,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            }
+          );
+        }
+        throw error;
+      }
+
+      if (!data) {
+        return new Response(
+          JSON.stringify({ error: 'Candidate not found' }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ candidate: data }),
+        { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
     // Admin resend invite
     if (action === 'admin.resend_invite') {
       const { id } = body;
