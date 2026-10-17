@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Copy, Check, Star, AlertCircle, Download, ChevronDown } from 'lucide-react';
+import { X, Copy, Check, Star, AlertCircle, Download, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { Candidate } from '../lib/types';
 import { formatDate, formatDateTime, formatDuration, copyToClipboard, capitalizeName, TRAIT_LABELS } from '../lib/utils';
 import { adminSetBenchmark } from '../lib/api';
@@ -9,10 +9,11 @@ import { TraitVisualization } from './TraitVisualization';
 interface Props {
   candidate: Candidate;
   onClose: () => void;
-  onUpdate?: (candidate: Candidate) => void;
+  onToggleHidden: (candidate: Candidate) => void;
+  hiding?: boolean;
 }
 
-export function CandidateDetailsModal({ candidate, onClose }: Props) {
+export function CandidateDetailsModal({ candidate, onClose, onToggleHidden, hiding = false }: Props) {
   const [copied, setCopied] = useState(false);
   const [settingBenchmark, setSettingBenchmark] = useState(false);
   const [showFormatMenu, setShowFormatMenu] = useState(false);
@@ -358,6 +359,15 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onToggleHidden(candidate)}
+              disabled={hiding}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-yala-green hover:bg-yala-lime-soft rounded-xl transition-all font-medium disabled:opacity-50"
+            >
+              {candidate.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              {hiding ? 'Saving...' : candidate.hidden ? 'Restore' : 'Hide'}
+            </button>
             <div className="relative">
               <button
                 onClick={() => setShowFormatMenu(!showFormatMenu)}

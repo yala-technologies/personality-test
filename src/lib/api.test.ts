@@ -4,6 +4,7 @@ import {
   adminListCandidates,
   adminCreateCandidate,
   adminSetBenchmark,
+  adminSetHidden,
   candidateGet,
   candidateSave,
 } from './api';
@@ -190,6 +191,46 @@ describe('API Client', () => {
             id: 'candidate-id-123',
           }),
         }
+      );
+    });
+  });
+
+  describe('adminSetHidden', () => {
+    it('should send the hidden flag for a candidate', async () => {
+      const candidate = { id: 'candidate-id-123', name: 'Test', hidden: true };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ candidate }),
+      });
+
+      const result = await adminSetHidden('test-session-token', 'candidate-id-123', true);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test.supabase.co/functions/v1/personality-api',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer test-session-token',
+          },
+          body: JSON.stringify({
+            action: 'admin.set_hidden',
+            id: 'candidate-id-123',
+            hidden: true,
+          }),
+        }
+      );
+      expect(result).toEqual(candidate);
+    });
+
+    it('should throw when the update fails', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'Candidate not found' }),
+      });
+
+      await expect(adminSetHidden('test-session-token', 'missing', false)).rejects.toThrow(
+        'Candidate not found'
       );
     });
   });

@@ -46,6 +46,7 @@ export interface AdminCandidate {
   access_token: string;
   status: AssessmentStatus;
   is_benchmark: boolean;
+  hidden: boolean;
   responses: Record<number, number> | null;
   question_order: number[] | null;
   scores: TraitScores | null;

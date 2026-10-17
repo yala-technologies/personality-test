@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LogOut, Search } from 'lucide-react';
-import { adminListCandidates, adminCreateCandidate } from '../lib/api';
+import { adminListCandidates, adminCreateCandidate, adminSetHidden } from '../lib/api';
 import { getSession, clearSession } from '../lib/auth';
 import type { Candidate } from '../lib/types';
 import { CandidateTable } from '../components/CandidateTable';
@@ -12,6 +12,7 @@ import { BulkDownloadButton } from '../components/BulkDownloadButton';
 
 type SortField = 'name' | 'email' | 'status' | 'created' | 'completed' | 'similarity';
 type SortDirection = 'asc' | 'desc';
+type ListView = 'results' | 'hidden';
 
 export function AdminDashboard() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -19,6 +20,8 @@ export function AdminDashboard() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [listView, setListView] = useState<ListView>('results');
+  const [hidingId, setHidingId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField>('created');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -82,14 +85,36 @@ export function AdminDashboard() {
     }
   }
 
+  async function handleToggleHidden(candidate: Candidate) {
+    const session = getSession();
+    if (!session) {
+      navigate('/admin', { replace: true });
+      return;
+    }
+
+    try {
+      setHidingId(candidate.id);
+      const updated = await adminSetHidden(session.token, candidate.id, !candidate.hidden);
+      setCandidates((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+      setSelectedCandidate((current) => (current?.id === updated.id ? null : current));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update visibility');
+    } finally {
+      setHidingId(null);
+    }
+  }
+
+  const hiddenCount = candidates.filter((candidate) => candidate.hidden).length;
+
   const filteredCandidates = candidates.filter((candidate) => {
     const matchesSearch =
       candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (candidate.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
     const matchesStatus = statusFilter === 'all' || candidate.status === statusFilter;
+    const matchesView = listView === 'hidden' ? Boolean(candidate.hidden) : !candidate.hidden;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesView;
   });
 
   function handleSort(field: SortField) {
@@ -179,6 +204,38 @@ export function AdminDashboard() {
             <OverviewCards candidates={candidates} />
 
             <div className="bg-white rounded-2xl shadow-lg border-2 border-yala-green/5 mt-6">
+              <div className="px-6 pt-6 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setListView('results')}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    listView === 'results'
+                      ? 'bg-yala-green text-yala-lime'
+                      : 'text-yala-green hover:bg-yala-lime-soft'
+                  }`}
+                >
+                  Results
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setListView('hidden')}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    listView === 'hidden'
+                      ? 'bg-yala-green text-yala-lime'
+                      : 'text-yala-green hover:bg-yala-lime-soft'
+                  }`}
+                >
+                  Hidden
+                  <span
+                    className={`inline-flex min-w-6 justify-center rounded-lg px-1.5 py-0.5 text-xs ${
+                      listView === 'hidden' ? 'bg-yala-lime text-yala-green' : 'bg-yala-lime-soft text-yala-green'
+                    }`}
+                  >
+                    {hiddenCount}
+                  </span>
+                </button>
+              </div>
+
               <div className="p-6 border-b-2 border-yala-green/5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex-1 max-w-md">
@@ -222,6 +279,15 @@ export function AdminDashboard() {
               <CandidateTable
                 candidates={sortedCandidates}
                 onSelectCandidate={setSelectedCandidate}
+                onToggleHidden={handleToggleHidden}
+                hidingId={hidingId}
+                emptyMessage={
+                  listView === 'hidden'
+                    ? 'No hidden results. Hide a candidate to move them here.'
+                    : candidates.length > 0 && hiddenCount === candidates.length
+                      ? 'All results are hidden. Open the Hidden tab to restore them.'
+                      : 'No candidates found. Create your first candidate to get started.'
+                }
                 sortField={sortField}
                 sortDirection={sortDirection}
                 onSort={handleSort}
@@ -241,13 +307,9 @@ export function AdminDashboard() {
       {selectedCandidate && (
         <CandidateDetailsModal
           candidate={selectedCandidate}
+          hiding={hidingId === selectedCandidate.id}
           onClose={() => setSelectedCandidate(null)}
-          onUpdate={(updated) => {
-            setCandidates(
-              candidates.map((c) => (c.id === updated.id ? updated : c))
-            );
-            setSelectedCandidate(updated);
-          }}
+          onToggleHidden={handleToggleHidden}
         />
       )}
     </div>

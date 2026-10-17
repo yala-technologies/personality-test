@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { Candidate } from '../lib/types';
 import { formatDate, capitalizeName } from '../lib/utils';
 
@@ -8,6 +8,9 @@ type SortDirection = 'asc' | 'desc';
 interface Props {
   candidates: Candidate[];
   onSelectCandidate: (candidate: Candidate) => void;
+  onToggleHidden: (candidate: Candidate) => void;
+  hidingId?: string | null;
+  emptyMessage?: string;
   sortField: SortField;
   sortDirection: SortDirection;
   onSort: (field: SortField) => void;
@@ -15,7 +18,10 @@ interface Props {
 
 export function CandidateTable({ 
   candidates, 
-  onSelectCandidate, 
+  onSelectCandidate,
+  onToggleHidden,
+  hidingId,
+  emptyMessage = 'No candidates found. Create your first candidate to get started.',
   sortField, 
   sortDirection, 
   onSort 
@@ -23,7 +29,7 @@ export function CandidateTable({
   if (candidates.length === 0) {
     return (
       <div className="p-8 text-center text-gray-500">
-        No candidates found. Create your first candidate to get started.
+        {emptyMessage}
       </div>
     );
   }
@@ -146,7 +152,23 @@ export function CandidateTable({
                 )}
               </td>
               <td className="px-6 py-5 whitespace-nowrap text-right text-sm">
-                <ChevronRight className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    title={candidate.hidden ? 'Restore to results' : 'Hide from results'}
+                    aria-label={candidate.hidden ? `Restore ${candidate.name}` : `Hide ${candidate.name}`}
+                    disabled={hidingId === candidate.id}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onToggleHidden(candidate);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-yala-green border-2 border-yala-green/15 hover:bg-yala-lime-soft disabled:opacity-50"
+                  >
+                    {candidate.hidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    {hidingId === candidate.id ? 'Saving...' : candidate.hidden ? 'Restore' : 'Hide'}
+                  </button>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
               </td>
             </tr>
           ))}

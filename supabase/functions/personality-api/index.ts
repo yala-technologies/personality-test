@@ -870,6 +870,44 @@ serve(async (req) => {
       );
     }
 
+    // Admin hide or restore a candidate on the results list
+    if (action === 'admin.set_hidden') {
+      const { id, hidden } = body;
+
+      if (!id || typeof hidden !== 'boolean') {
+        return new Response(
+          JSON.stringify({ error: 'Candidate ID and hidden flag are required' }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('personality_candidates')
+        .update({ hidden })
+        .eq('id', id)
+        .select('*')
+        .single();
+
+      if (error || !data) {
+        const missing = error?.code === 'PGRST116';
+        return new Response(
+          JSON.stringify({ error: missing ? 'Candidate not found' : (error?.message || 'Candidate not found') }),
+          {
+            status: missing ? 404 : 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ candidate: data }),
+        { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
     // Admin resend invite
     if (action === 'admin.resend_invite') {
       const { id } = body;

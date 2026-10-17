@@ -6,10 +6,11 @@ interface Props {
 }
 
 export function OverviewCards({ candidates }: Props) {
-  const totalCandidates = candidates.length;
-  const invited = candidates.filter((c) => c.status === 'invited').length;
-  const inProgress = candidates.filter((c) => c.status === 'in_progress').length;
-  const completed = candidates.filter((c) => c.status === 'completed').length;
+  const visible = candidates.filter((c) => !c.hidden);
+  const totalCandidates = visible.length;
+  const invited = visible.filter((c) => c.status === 'invited').length;
+  const inProgress = visible.filter((c) => c.status === 'in_progress').length;
+  const completed = visible.filter((c) => c.status === 'completed').length;
   const benchmark = candidates.find((c) => c.is_benchmark);
 
   const cards = [
