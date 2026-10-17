@@ -123,6 +123,38 @@ export async function adminResendInvite(
 }
 
 /**
+ * Admin hide or restore a result
+ * Backend expects: { action: 'admin.set_hidden', id: string, hidden: boolean }
+ * Backend returns: { candidate: AdminCandidate }
+ */
+export async function adminSetHidden(
+  sessionToken: string,
+  candidateId: string,
+  hidden: boolean
+): Promise<AdminCandidate> {
+  const response = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${sessionToken}`,
+    },
+    body: JSON.stringify({
+      action: 'admin.set_hidden',
+      id: candidateId,
+      hidden,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to update result visibility' }));
+    throw new Error(error.error || 'Failed to update result visibility');
+  }
+
+  const result = await response.json();
+  return result.candidate;
+}
+
+/**
  * Admin set benchmark
  * Backend expects: { action: 'admin.benchmark', id: string }
  * Backend returns: { ok: true }

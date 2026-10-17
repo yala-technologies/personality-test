@@ -57,6 +57,8 @@ export interface AdminCandidate {
   created_at: string;
   updated_at: string;
   assessment_version: string;
+  /** When true, the result is listed on the admin Hidden tab instead of the main results view. */
+  hidden: boolean;
 }
 
 /**

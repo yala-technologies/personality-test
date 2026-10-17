@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { Candidate } from '../lib/types';
 import { formatDate, capitalizeName } from '../lib/utils';
 
@@ -11,6 +11,10 @@ interface Props {
   sortField: SortField;
   sortDirection: SortDirection;
   onSort: (field: SortField) => void;
+  view: 'visible' | 'hidden';
+  pendingCandidateId: string | null;
+  onSetHidden: (candidate: Candidate, hidden: boolean) => void;
+  emptyMessage: string;
 }
 
 export function CandidateTable({ 
@@ -18,12 +22,16 @@ export function CandidateTable({
   onSelectCandidate, 
   sortField, 
   sortDirection, 
-  onSort 
+  onSort,
+  view,
+  pendingCandidateId,
+  onSetHidden,
+  emptyMessage,
 }: Props) {
   if (candidates.length === 0) {
     return (
       <div className="p-8 text-center text-gray-500">
-        No candidates found. Create your first candidate to get started.
+        {emptyMessage}
       </div>
     );
   }
@@ -146,7 +154,30 @@ export function CandidateTable({
                 )}
               </td>
               <td className="px-6 py-5 whitespace-nowrap text-right text-sm">
-                <ChevronRight className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSetHidden(candidate, view === 'visible');
+                    }}
+                    disabled={pendingCandidateId === candidate.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border-2 border-yala-green/15 text-yala-green bg-white hover:bg-yala-lime-soft focus:outline-none focus:ring-2 focus:ring-yala-lime disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {view === 'hidden' ? (
+                      <>
+                        <Eye className="w-3.5 h-3.5" />
+                        {pendingCandidateId === candidate.id ? 'Restoring...' : 'Restore'}
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5" />
+                        {pendingCandidateId === candidate.id ? 'Hiding...' : 'Hide'}
+                      </>
+                    )}
+                  </button>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
               </td>
             </tr>
           ))}
